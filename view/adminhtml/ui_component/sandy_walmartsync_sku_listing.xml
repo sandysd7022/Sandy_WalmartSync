@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<listing xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <argument name="data" xsi:type="array">
+        <item name="js_config" xsi:type="array">
+            <item name="provider" xsi:type="string">sandy_walmartsync_sku_listing.sandy_walmartsync_sku_listing_data_source</item>
+            <item name="deps" xsi:type="string">sandy_walmartsync_sku_listing.sandy_walmartsync_sku_listing_data_source</item>
+        </item>
+        <item name="spinner" xsi:type="string">walmart_sku_columns</item>
+    </argument>
+    <dataSource name="sandy_walmartsync_sku_listing_data_source">
+        <argument name="dataProvider" xsi:type="configurableObject">
+            <argument name="class" xsi:type="string">Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider</argument>
+            <argument name="name" xsi:type="string">sandy_walmartsync_sku_listing_data_source</argument>
+            <argument name="primaryFieldName" xsi:type="string">entity_id</argument>
+            <argument name="requestFieldName" xsi:type="string">id</argument>
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="component" xsi:type="string">Magento_Ui/js/grid/provider</item>
+                    <item name="update_url" xsi:type="url" path="mui/index/render"/>
+                    <item name="storageConfig" xsi:type="array">
+                        <item name="indexField" xsi:type="string">entity_id</item>
+                    </item>
+                </item>
+            </argument>
+        </argument>
+    </dataSource>
+    <listingToolbar name="listing_top">
+        <bookmark name="bookmarks"/>
+        <columnsControls name="columns_controls"/>
+        <filters name="listing_filters"/>
+        <paging name="listing_paging"/>
+    </listingToolbar>
+    <columns name="walmart_sku_columns">
+        <selectionsColumn name="ids"><settings><indexField>entity_id</indexField></settings></selectionsColumn>
+        <column name="walmart_sku"><settings><filter>text</filter><label translate="true">Walmart SKU</label></settings></column>
+        <column name="item_id"><settings><filter>text</filter><label translate="true">Item ID</label></settings></column>
+        <column name="product_name"><settings><filter>text</filter><label translate="true">Walmart Product</label></settings></column>
+        <column name="current_qty"><settings><filter>textRange</filter><label translate="true">Last Known Qty</label></settings></column>
+        <column name="magento_sku"><settings><filter>text</filter><label translate="true">Magento SKU</label></settings></column>
+        <column name="is_eligible" component="Magento_Ui/js/grid/columns/select">
+            <settings>
+                <options class="Magento\Config\Model\Config\Source\Yesno"/>
+                <filter>select</filter><dataType>select</dataType><label translate="true">Eligible</label>
+            </settings>
+        </column>
+        <column name="eligibility_reason"><settings><filter>text</filter><label translate="true">Eligibility Reason</label></settings></column>
+        <column name="published_status"><settings><filter>text</filter><label translate="true">Published Status</label></settings></column>
+        <column name="last_sync_status"><settings><filter>text</filter><label translate="true">Last Result</label></settings></column>
+        <column name="last_error"><settings><filter>text</filter><label translate="true">Last Error</label></settings></column>
+        <column name="updated_at" class="Magento\Ui\Component\Listing\Columns\Date">
+            <settings><filter>dateRange</filter><dataType>date</dataType><label translate="true">Updated</label></settings>
+        </column>
+    </columns>
+</listing>

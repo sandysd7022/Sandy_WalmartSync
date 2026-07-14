@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <sandy_walmartsync>
+            <general>
+                <enabled>0</enabled>
+                <environment>production</environment>
+                <api_base_url>https://marketplace.walmartapis.com</api_base_url>
+                <batch_size>50</batch_size>
+                <retry_count>3</retry_count>
+                <inventory_buffer>0</inventory_buffer>
+            </general>
+            <safety>
+                <write_enabled>0</write_enabled>
+                <cron_enabled>0</cron_enabled>
+                <cron_expression>*/15 * * * *</cron_expression>
+            </safety>
+        </sandy_walmartsync>
+    </default>
+</config>

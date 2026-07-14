@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="Sandy_WalmartSync::menu" title="Walmart Sync" module="Sandy_WalmartSync"
+             sortOrder="90" resource="Sandy_WalmartSync::root"/>
+        <add id="Sandy_WalmartSync::sku_grid" title="Known Walmart SKUs" module="Sandy_WalmartSync"
+             sortOrder="10" parent="Sandy_WalmartSync::menu" action="sandy_walmartsync/sku/index"
+             resource="Sandy_WalmartSync::operations"/>
+        <add id="Sandy_WalmartSync::configuration" title="Configuration" module="Sandy_WalmartSync"
+             sortOrder="20" parent="Sandy_WalmartSync::menu" action="adminhtml/system_config/edit/section/sandy_walmartsync"
+             resource="Sandy_WalmartSync::config"/>
+    </menu>
+</config>

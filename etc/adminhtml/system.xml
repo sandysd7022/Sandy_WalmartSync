@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="sandy" translate="label" sortOrder="900"><label>Sandy</label></tab>
+        <section id="sandy_walmartsync" translate="label" type="text" sortOrder="90"
+                 showInDefault="1" showInWebsite="0" showInStore="0">
+            <label>Walmart Sync</label>
+            <tab>sandy</tab>
+            <resource>Sandy_WalmartSync::config</resource>
+            <group id="general" translate="label" type="text" sortOrder="10" showInDefault="1">
+                <label>Connection and Processing</label>
+                <field id="enabled" translate="label" type="select" sortOrder="10" showInDefault="1">
+                    <label>Module Enabled</label><source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="environment" translate="label" type="select" sortOrder="20" showInDefault="1">
+                    <label>Environment</label><source_model>Sandy\WalmartSync\Model\Config\Source\Environment</source_model>
+                </field>
+                <field id="client_id" translate="label" type="obscure" sortOrder="30" showInDefault="1">
+                    <label>Walmart Client ID</label><backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                </field>
+                <field id="client_secret" translate="label" type="obscure" sortOrder="40" showInDefault="1">
+                    <label>Walmart Client Secret</label><backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                </field>
+                <field id="channel_type" translate="label comment" type="text" sortOrder="50" showInDefault="1">
+                    <label>Consumer Channel Type</label><comment>Optional value provided during Walmart API onboarding.</comment>
+                </field>
+                <field id="ship_node" translate="label comment" type="text" sortOrder="60" showInDefault="1">
+                    <label>Default Ship Node</label><comment>Leave empty to use Walmart's default ship node.</comment>
+                </field>
+                <field id="batch_size" translate="label" type="text" sortOrder="70" showInDefault="1">
+                    <label>Batch Size</label><validate>validate-number validate-greater-than-zero</validate>
+                </field>
+                <field id="retry_count" translate="label" type="text" sortOrder="80" showInDefault="1">
+                    <label>API Retry Count</label><validate>validate-number validate-zero-or-greater</validate>
+                </field>
+                <field id="inventory_buffer" translate="label" type="text" sortOrder="90" showInDefault="1">
+                    <label>Inventory Buffer</label><validate>validate-number validate-zero-or-greater</validate>
+                </field>
+            </group>
+            <group id="safety" translate="label" type="text" sortOrder="20" showInDefault="1">
+                <label>Safety Controls</label>
+                <field id="write_enabled" translate="label comment" type="select" sortOrder="10" showInDefault="1">
+                    <label>Allow Walmart Write Operations</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Keep disabled until catalog import, backup, and dry-run results have been reviewed.</comment>
+                </field>
+                <field id="cron_enabled" translate="label comment" type="select" sortOrder="20" showInDefault="1">
+                    <label>Enable Inventory Cron</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Writes still require Allow Walmart Write Operations to be enabled.</comment>
+                </field>
+                <field id="cron_expression" translate="label" type="text" sortOrder="30" showInDefault="1">
+                    <label>Inventory Cron Expression</label>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>
