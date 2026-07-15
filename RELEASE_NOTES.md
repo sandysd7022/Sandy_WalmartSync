@@ -1,5 +1,12 @@
 # Stage 1 release notes
 
+## 1.0.3
+
+- Added support for Walmart's current All Items response containing a top-level `itemResponse` array.
+- Added compatibility with `elements.items` and `list.elements.item` response variants.
+- Added `meta.nextCursor` and `list.meta.nextCursor` pagination variants.
+- Added a fail-safe error when Walmart reports items but the response shape is not recognized.
+
 ## 1.0.2
 
 - Replaced Zend HTTP transport with a module-owned cURL transport because Magento 2.3's Zend HTTP client rejects Walmart's required underscore-style headers such as `WM_SEC.ACCESS_TOKEN`.

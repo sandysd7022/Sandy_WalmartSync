@@ -40,6 +40,9 @@ class CatalogImporter
         do {
             $response = $this->client->getAllItems($cursor, $this->config->getBatchSize());
             $items = $this->extractItems($response);
+            if (!$items && $this->extractReportedTotal($response) > 0) {
+                throw new \RuntimeException('Walmart reported catalog items, but the response structure was not recognized. No records were imported.');
+            }
             foreach ($items as $item) {
                 if ($limit !== null && $imported >= (int)$limit) {
                     break 2;
@@ -98,6 +101,9 @@ class CatalogImporter
         $candidates = [
             isset($response['ItemResponse']['Item']) ? $response['ItemResponse']['Item'] : null,
             isset($response['itemResponse']['item']) ? $response['itemResponse']['item'] : null,
+            isset($response['itemResponse']) ? $response['itemResponse'] : null,
+            isset($response['elements']['items']) ? $response['elements']['items'] : null,
+            isset($response['list']['elements']['item']) ? $response['list']['elements']['item'] : null,
             isset($response['items']) ? $response['items'] : null,
             isset($response['Item']) ? $response['Item'] : null
         ];
@@ -123,7 +129,28 @@ class CatalogImporter
         if (isset($response['itemResponse']['nextCursor'])) {
             return (string)$response['itemResponse']['nextCursor'];
         }
+        if (isset($response['meta']['nextCursor'])) {
+            return (string)$response['meta']['nextCursor'];
+        }
+        if (isset($response['list']['meta']['nextCursor'])) {
+            return (string)$response['list']['meta']['nextCursor'];
+        }
         return null;
+    }
+
+    private function extractReportedTotal(array $response)
+    {
+        $candidates = [
+            isset($response['totalItems']) ? $response['totalItems'] : null,
+            isset($response['meta']['totalCount']) ? $response['meta']['totalCount'] : null,
+            isset($response['list']['meta']['totalCount']) ? $response['list']['meta']['totalCount'] : null
+        ];
+        foreach ($candidates as $candidate) {
+            if ($candidate !== null) {
+                return (int)$candidate;
+            }
+        }
+        return 0;
     }
 
     private function value(array $item, array $keys)
