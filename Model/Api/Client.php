@@ -40,11 +40,15 @@ class Client
         $this->httpTransport = $httpTransport;
     }
 
-    public function getAllItems($nextCursor = null, $limit = 50)
+    public function getAllItems($nextCursor = null, $limit = 50, $offset = null)
     {
         $query = ['limit' => max(1, min(200, (int)$limit))];
-        if ($nextCursor !== null && $nextCursor !== '') {
+        if ($offset !== null) {
+            $query['offset'] = max(0, (int)$offset);
+        } elseif ($nextCursor !== null && $nextCursor !== '') {
             $query['nextCursor'] = $nextCursor;
+        } else {
+            $query['nextCursor'] = '*';
         }
         return $this->request('GET', '/v3/items', $query);
     }

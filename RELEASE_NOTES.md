@@ -1,5 +1,18 @@
 # Stage 1 release notes
 
+## 1.0.5
+
+- Add the required `nextCursor=*` pagination marker for direct cursor-based All Items requests.
+- Use Walmart's documented `offset` and `limit` pagination for the full catalog import, avoiding missing or unchanged cursor responses.
+- Track API records consumed separately from successfully imported records to prevent skipped pages.
+
+## 1.0.4
+
+- Added direct support for `ItemResponse`, nested `items`, `payload`, and `data.items` All Items response envelopes.
+- Added a bounded recursive fallback that recognizes item lists by their SKU and item metadata fields.
+- Added recursive `nextCursor`, `totalItems`, and `totalCount` discovery for safe pagination and response validation.
+- Added the read-only `walmart:catalog:diagnose` command, which prints key names and data types but hides all values and credentials.
+
 ## 1.0.3
 
 - Added support for Walmart's current All Items response containing a top-level `itemResponse` array.

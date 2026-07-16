@@ -35,14 +35,17 @@ class CatalogImporter
     {
         $imported = 0;
         $errors = 0;
+        $recordsSeen = 0;
         $cursor = null;
-        $seenCursors = [];
+        $offset = 0;
         do {
-            $response = $this->client->getAllItems($cursor, $this->config->getBatchSize());
+            $response = $this->client->getAllItems($cursor, $this->config->getBatchSize(), $offset);
             $items = $this->extractItems($response);
-            if (!$items && $this->extractReportedTotal($response) > 0) {
+            $reportedTotal = $this->extractReportedTotal($response);
+            if (!$items && $reportedTotal > 0) {
                 throw new \RuntimeException('Walmart reported catalog items, but the response structure was not recognized. No records were imported.');
             }
+            $recordsSeen += count($items);
             foreach ($items as $item) {
                 if ($limit !== null && $imported >= (int)$limit) {
                     break 2;
@@ -65,14 +68,15 @@ class CatalogImporter
                 ]);
                 $imported++;
             }
-            $cursor = $this->extractCursor($response);
-            if ($cursor !== null && isset($seenCursors[$cursor])) {
-                throw new \RuntimeException('Walmart catalog pagination returned a repeated cursor. Import stopped to prevent an infinite loop.');
+            if ($reportedTotal > $recordsSeen && $items) {
+                if ($recordsSeen > 10000) {
+                    throw new \RuntimeException('Walmart catalog exceeds the supported offset range of 10,000 records. Import stopped without changing Walmart data.');
+                }
+                $offset = $recordsSeen;
+            } else {
+                $offset = null;
             }
-            if ($cursor !== null) {
-                $seenCursors[$cursor] = true;
-            }
-        } while ($cursor !== null && $cursor !== '' && $items);
+        } while ($offset !== null && $items);
 
         $this->logger->log('catalog_import', $errors ? 'partial' : 'success', null, null, null, $imported, sprintf('Imported %d Walmart SKUs with %d errors.', $imported, $errors));
         return ['imported' => $imported, 'errors' => $errors];
@@ -100,22 +104,33 @@ class CatalogImporter
     {
         $candidates = [
             isset($response['ItemResponse']['Item']) ? $response['ItemResponse']['Item'] : null,
+            isset($response['ItemResponse']['items']) ? $response['ItemResponse']['items'] : null,
+            isset($response['ItemResponse']) ? $response['ItemResponse'] : null,
             isset($response['itemResponse']['item']) ? $response['itemResponse']['item'] : null,
+            isset($response['itemResponse']['items']) ? $response['itemResponse']['items'] : null,
             isset($response['itemResponse']) ? $response['itemResponse'] : null,
             isset($response['elements']['items']) ? $response['elements']['items'] : null,
             isset($response['list']['elements']['item']) ? $response['list']['elements']['item'] : null,
+            isset($response['list']['elements']['items']) ? $response['list']['elements']['items'] : null,
+            isset($response['payload']) ? $response['payload'] : null,
+            isset($response['data']['items']) ? $response['data']['items'] : null,
             isset($response['items']) ? $response['items'] : null,
             isset($response['Item']) ? $response['Item'] : null
         ];
         foreach ($candidates as $candidate) {
             if (is_array($candidate)) {
                 if (!$candidate) {
-                    return [];
+                    continue;
                 }
-                return array_keys($candidate) === range(0, count($candidate) - 1) ? $candidate : [$candidate];
+                if ($this->looksLikeItem($candidate)) {
+                    return [$candidate];
+                }
+                if ($this->isList($candidate) && isset($candidate[0]) && is_array($candidate[0]) && $this->looksLikeItem($candidate[0])) {
+                    return $candidate;
+                }
             }
         }
-        return [];
+        return $this->findItemList($response);
     }
 
     private function extractCursor(array $response)
@@ -135,7 +150,7 @@ class CatalogImporter
         if (isset($response['list']['meta']['nextCursor'])) {
             return (string)$response['list']['meta']['nextCursor'];
         }
-        return null;
+        return $this->findScalarByKey($response, 'nextCursor');
     }
 
     private function extractReportedTotal(array $response)
@@ -150,7 +165,8 @@ class CatalogImporter
                 return (int)$candidate;
             }
         }
-        return 0;
+        $found = $this->findScalarByKeys($response, ['totalItems', 'totalCount']);
+        return $found === null ? 0 : (int)$found;
     }
 
     private function value(array $item, array $keys)
@@ -161,5 +177,72 @@ class CatalogImporter
             }
         }
         return '';
+    }
+
+    private function findItemList(array $node, $depth = 0)
+    {
+        if ($depth > 8) {
+            return [];
+        }
+        if ($this->isList($node) && isset($node[0]) && is_array($node[0]) && $this->looksLikeItem($node[0])) {
+            return $node;
+        }
+        foreach ($node as $value) {
+            if (!is_array($value)) {
+                continue;
+            }
+            if ($this->looksLikeItem($value)) {
+                return [$value];
+            }
+            $items = $this->findItemList($value, $depth + 1);
+            if ($items) {
+                return $items;
+            }
+        }
+        return [];
+    }
+
+    private function looksLikeItem(array $value)
+    {
+        $hasSku = isset($value['sku']) || isset($value['SKU']) || isset($value['partnerItemId']);
+        $hasItemField = isset($value['productName']) || isset($value['product_name']) ||
+            isset($value['publishedStatus']) || isset($value['lifecycleStatus']) ||
+            isset($value['itemId']) || isset($value['wpid']) || isset($value['mart']);
+        return $hasSku && $hasItemField;
+    }
+
+    private function isList(array $value)
+    {
+        return $value && array_keys($value) === range(0, count($value) - 1);
+    }
+
+    private function findScalarByKey(array $node, $key, $depth = 0)
+    {
+        if ($depth > 8) {
+            return null;
+        }
+        if (array_key_exists($key, $node) && !is_array($node[$key]) && $node[$key] !== null) {
+            return (string)$node[$key];
+        }
+        foreach ($node as $value) {
+            if (is_array($value)) {
+                $found = $this->findScalarByKey($value, $key, $depth + 1);
+                if ($found !== null) {
+                    return $found;
+                }
+            }
+        }
+        return null;
+    }
+
+    private function findScalarByKeys(array $node, array $keys, $depth = 0)
+    {
+        foreach ($keys as $key) {
+            $found = $this->findScalarByKey($node, $key, $depth);
+            if ($found !== null) {
+                return $found;
+            }
+        }
+        return null;
     }
 }

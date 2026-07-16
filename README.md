@@ -42,6 +42,7 @@ Seller Center access alone does not provide API credentials. Obtain the seller's
 
 ```bash
 php bin/magento walmart:connection:test
+php bin/magento walmart:catalog:diagnose
 php bin/magento walmart:catalog:import --limit=10
 php bin/magento walmart:inventory:backup --sku=TEST-SKU
 php bin/magento walmart:inventory:preview --sku=TEST-SKU
