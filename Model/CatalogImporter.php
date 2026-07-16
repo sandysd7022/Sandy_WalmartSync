@@ -36,6 +36,7 @@ class CatalogImporter
         $imported = 0;
         $errors = 0;
         $recordsSeen = 0;
+        $uniqueSkus = [];
         $cursor = null;
         $offset = 0;
         do {
@@ -56,6 +57,7 @@ class CatalogImporter
                     $this->logger->log('catalog_import', 'error', null, null, null, null, 'Walmart item did not contain a SKU.', $this->client->getLastCorrelationId());
                     continue;
                 }
+                $uniqueSkus[$sku] = true;
                 $match = $this->matchMagentoProduct($sku);
                 $this->storage->upsert([
                     'walmart_sku' => $sku,
@@ -78,8 +80,11 @@ class CatalogImporter
             }
         } while ($offset !== null && $items);
 
-        $this->logger->log('catalog_import', $errors ? 'partial' : 'success', null, null, null, $imported, sprintf('Imported %d Walmart SKUs with %d errors.', $imported, $errors));
-        return ['imported' => $imported, 'errors' => $errors];
+        $unique = count($uniqueSkus);
+        $repeated = max(0, $imported - $unique);
+        $message = sprintf('Processed %d Walmart catalog records: %d unique SKUs, %d repeated SKU records, %d errors.', $imported, $unique, $repeated, $errors);
+        $this->logger->log('catalog_import', $errors ? 'partial' : 'success', null, null, null, $unique, $message);
+        return ['imported' => $imported, 'unique' => $unique, 'repeated' => $repeated, 'errors' => $errors];
     }
 
     private function matchMagentoProduct($walmartSku)

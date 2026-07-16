@@ -1,5 +1,10 @@
 # Stage 1 release notes
 
+## 1.0.6
+
+- Clarified the catalog import result by reporting API records processed, unique Walmart SKUs, repeated SKU records, and errors separately.
+- Kept the existing unique-SKU upsert behavior, so repeated API records update one local SKU row instead of creating duplicates.
+
 ## 1.0.5
 
 - Add the required `nextCursor=*` pagination marker for direct cursor-based All Items requests.
