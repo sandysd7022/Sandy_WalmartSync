@@ -7,6 +7,7 @@
                 <item name="walmart_connection_test" xsi:type="object">Sandy\WalmartSync\Console\Command\ConnectionTestCommand</item>
                 <item name="walmart_catalog_import" xsi:type="object">Sandy\WalmartSync\Console\Command\CatalogImportCommand</item>
                 <item name="walmart_catalog_diagnose" xsi:type="object">Sandy\WalmartSync\Console\Command\CatalogDiagnoseCommand</item>
+                <item name="walmart_sku_configure" xsi:type="object">Sandy\WalmartSync\Console\Command\SkuConfigureCommand</item>
                 <item name="walmart_inventory_backup" xsi:type="object">Sandy\WalmartSync\Console\Command\InventoryBackupCommand</item>
                 <item name="walmart_inventory_preview" xsi:type="object">Sandy\WalmartSync\Console\Command\InventoryPreviewCommand</item>
                 <item name="walmart_inventory_zero" xsi:type="object">Sandy\WalmartSync\Console\Command\InventoryZeroCommand</item>

@@ -27,6 +27,13 @@ class Eligibility
     {
         $walmartSku = isset($record['walmart_sku']) ? (string)$record['walmart_sku'] : '';
         $magentoSku = !empty($record['magento_sku']) ? (string)$record['magento_sku'] : $walmartSku;
+        $mappingType = isset($record['mapping_type']) ? (string)$record['mapping_type'] : 'unmatched';
+        if ($mappingType === 'custom_option' && empty($record['mapping_verified'])) {
+            return $this->result(false, 0, $magentoSku, 'Custom-option mapping is not manually verified.', isset($record['product_id']) ? (int)$record['product_id'] : null);
+        }
+        if ($mappingType === 'ambiguous_option') {
+            return $this->result(false, 0, $magentoSku, 'Custom-option SKU matches more than one Magento option.', null);
+        }
         try {
             $product = $this->productRepository->get($magentoSku, false, null, true);
         } catch (NoSuchEntityException $exception) {
@@ -38,14 +45,17 @@ class Eligibility
         if (!(bool)$product->getData('walmart_sync_enabled')) {
             return $this->result(false, 0, $magentoSku, 'Walmart Sync is not enabled for the product.', (int)$product->getId());
         }
-        if ((string)$product->getData('walmart_exemption_status') !== 'approved') {
-            return $this->result(false, 0, $magentoSku, 'Return exemption status is not Approved.', (int)$product->getId());
+        $exemptionStatus = $mappingType === 'custom_option'
+            ? (isset($record['sku_exemption_status']) ? (string)$record['sku_exemption_status'] : 'unknown')
+            : (string)$product->getData('walmart_exemption_status');
+        if ($exemptionStatus !== 'approved') {
+            return $this->result(false, 0, $magentoSku, 'Return exemption status is not Approved for this Walmart SKU.', (int)$product->getId());
         }
         if ((bool)$product->getData('walmart_force_zero')) {
             return $this->result(false, 0, $magentoSku, 'Product is manually forced to zero.', (int)$product->getId());
         }
         $configuredWalmartSku = trim((string)$product->getData('walmart_sku'));
-        if ($configuredWalmartSku !== '' && $configuredWalmartSku !== $walmartSku) {
+        if ($mappingType !== 'custom_option' && $configuredWalmartSku !== '' && $configuredWalmartSku !== $walmartSku) {
             return $this->result(false, 0, $magentoSku, 'Configured Walmart SKU does not match this Walmart record.', (int)$product->getId());
         }
         $stockItem = $this->stockRegistry->getStockItem((int)$product->getId());

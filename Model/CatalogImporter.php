@@ -14,6 +14,7 @@ class CatalogImporter
     private $logger;
     private $config;
     private $productCollectionFactory;
+    private $customOptionMatcher;
 
     public function __construct(
         Client $client,
@@ -21,7 +22,8 @@ class CatalogImporter
         ProductRepositoryInterface $productRepository,
         OperationLogger $logger,
         Config $config,
-        ProductCollectionFactory $productCollectionFactory
+        ProductCollectionFactory $productCollectionFactory,
+        CustomOptionMatcher $customOptionMatcher
     ) {
         $this->client = $client;
         $this->storage = $storage;
@@ -29,6 +31,7 @@ class CatalogImporter
         $this->logger = $logger;
         $this->config = $config;
         $this->productCollectionFactory = $productCollectionFactory;
+        $this->customOptionMatcher = $customOptionMatcher;
     }
 
     public function execute($limit = null)
@@ -59,15 +62,22 @@ class CatalogImporter
                 }
                 $uniqueSkus[$sku] = true;
                 $match = $this->matchMagentoProduct($sku);
-                $this->storage->upsert([
+                $mapping = [
+                    'mapping_type' => isset($match['mapping_type']) ? $match['mapping_type'] : 'unmatched',
+                    'magento_sku' => isset($match['sku']) ? $match['sku'] : null,
+                    'product_id' => isset($match['id']) ? $match['id'] : null,
+                    'option_id' => isset($match['option_id']) ? $match['option_id'] : null,
+                    'option_type_id' => isset($match['option_type_id']) ? $match['option_type_id'] : null,
+                    'option_title' => isset($match['option_title']) ? $match['option_title'] : null
+                ];
+                $this->storage->resetControlsWhenMappingChanges($sku, $mapping);
+                $this->storage->upsert(array_merge([
                     'walmart_sku' => $sku,
                     'item_id' => $this->value($item, ['itemId', 'item_id', 'wpid']),
                     'product_name' => $this->value($item, ['productName', 'product_name', 'title']),
-                    'magento_sku' => $match['sku'],
-                    'product_id' => $match['id'],
                     'published_status' => $this->value($item, ['publishedStatus', 'published_status']),
                     'lifecycle_status' => $this->value($item, ['lifecycleStatus', 'lifecycle_status'])
-                ]);
+                ], $mapping));
                 $imported++;
             }
             if ($reportedTotal > $recordsSeen && $items) {
@@ -91,7 +101,12 @@ class CatalogImporter
     {
         try {
             $product = $this->productRepository->get($walmartSku, false, null, true);
-            return ['sku' => $product->getSku(), 'id' => (int)$product->getId()];
+            $optionMatch = $this->customOptionMatcher->match($walmartSku);
+            if ($optionMatch && isset($optionMatch['mapping_type']) && $optionMatch['mapping_type'] === 'custom_option' &&
+                isset($optionMatch['id']) && (int)$optionMatch['id'] === (int)$product->getId()) {
+                return $optionMatch;
+            }
+            return ['mapping_type' => 'product_sku', 'sku' => $product->getSku(), 'id' => (int)$product->getId()];
         } catch (NoSuchEntityException $exception) {
             $collection = $this->productCollectionFactory->create();
             $collection->addAttributeToSelect('sku')
@@ -99,9 +114,10 @@ class CatalogImporter
                 ->setPageSize(1);
             $product = $collection->getFirstItem();
             if ($product->getId()) {
-                return ['sku' => $product->getSku(), 'id' => (int)$product->getId()];
+                return ['mapping_type' => 'product_attribute', 'sku' => $product->getSku(), 'id' => (int)$product->getId()];
             }
-            return ['sku' => null, 'id' => null];
+            $optionMatch = $this->customOptionMatcher->match($walmartSku);
+            return $optionMatch ?: ['mapping_type' => 'unmatched', 'sku' => null, 'id' => null];
         }
     }
 

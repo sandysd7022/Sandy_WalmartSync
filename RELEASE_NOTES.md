@@ -1,5 +1,15 @@
 # Stage 1 release notes
 
+## 1.1.0
+
+- Added Magento custom-option SKU matching, including option value SKUs such as `SD0205J`.
+- Added mapping type, option identifiers/title, manual mapping verification, and per-Walmart-SKU exemption status.
+- Custom-option mappings now use the parent Magento product quantity unchanged; the configured global buffer still applies and should remain `0` for exact quantities.
+- Added safety gates: custom-option mappings cannot send positive inventory until manually verified and individually marked exemption-approved.
+- Added `walmart:sku:configure` to manage the local verification and exemption controls without changing Walmart.
+- Added an installed-module schema upgrade and new grid columns for mapping review.
+- Product content, titles, prices, images, UPCs, and GTINs remain read-only and are not modified by this release.
+
 ## 1.0.6
 
 - Clarified the catalog import result by reporting API records processed, unique Walmart SKUs, repeated SKU records, and errors separately.

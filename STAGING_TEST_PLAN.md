@@ -37,6 +37,15 @@ php bin/magento walmart:inventory:sync --sku=TEST-SKU
 
 Verify the Admin **Walmart Sync > Known Walmart SKUs** grid. Confirm the Walmart SKU, Item ID, Magento match, last known quantity, eligibility, and reason.
 
+For a Magento custom-option SKU, verify that the grid shows the parent Magento SKU, mapping type `custom_option`, and the correct option title. Keep it ineligible until the mapping and exemption are confirmed:
+
+```bash
+php bin/magento walmart:sku:configure --sku=TEST-OPTION-SKU --mapping-verified=yes --exemption=approved
+php bin/magento walmart:inventory:preview --sku=TEST-OPTION-SKU
+```
+
+This configuration command updates only the local Magento mapping controls. It does not call Walmart.
+
 ## One-product write canary
 
 Obtain written client approval. Enable **Allow Walmart Write Operations**, but leave cron disabled.

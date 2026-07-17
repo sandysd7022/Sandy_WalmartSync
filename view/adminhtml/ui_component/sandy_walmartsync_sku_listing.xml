@@ -38,6 +38,15 @@
         <column name="product_name"><settings><filter>text</filter><label translate="true">Walmart Product</label></settings></column>
         <column name="current_qty"><settings><filter>textRange</filter><label translate="true">Last Known Qty</label></settings></column>
         <column name="magento_sku"><settings><filter>text</filter><label translate="true">Magento SKU</label></settings></column>
+        <column name="mapping_type"><settings><filter>text</filter><label translate="true">Mapping Type</label></settings></column>
+        <column name="option_title"><settings><filter>text</filter><label translate="true">Magento Option</label></settings></column>
+        <column name="mapping_verified" component="Magento_Ui/js/grid/columns/select">
+            <settings>
+                <options class="Magento\Config\Model\Config\Source\Yesno"/>
+                <filter>select</filter><dataType>select</dataType><label translate="true">Mapping Verified</label>
+            </settings>
+        </column>
+        <column name="sku_exemption_status"><settings><filter>text</filter><label translate="true">SKU Exemption</label></settings></column>
         <column name="is_eligible" component="Magento_Ui/js/grid/columns/select">
             <settings>
                 <options class="Magento\Config\Model\Config\Source\Yesno"/>
