@@ -28,7 +28,9 @@ Keep both **Allow Walmart Write Operations** and **Enable Inventory Cron** set t
 
 ```bash
 php bin/magento walmart:connection:test
-php bin/magento walmart:catalog:import --limit=10
+php bin/magento walmart:catalog:import
+php bin/magento walmart:catalog:reconcile
+php bin/magento walmart:exemption:export --scope=all
 php bin/magento walmart:inventory:backup --sku=TEST-SKU
 php bin/magento walmart:inventory:preview --sku=TEST-SKU
 php bin/magento walmart:inventory:zero --sku=TEST-SKU
@@ -37,14 +39,26 @@ php bin/magento walmart:inventory:sync --sku=TEST-SKU
 
 Verify the Admin **Walmart Sync > Known Walmart SKUs** grid. Confirm the Walmart SKU, Item ID, Magento match, last known quantity, eligibility, and reason.
 
-For a Magento custom-option SKU, verify that the grid shows the parent Magento SKU, mapping type `custom_option`, and the correct option title. Keep it ineligible until the mapping and exemption are confirmed:
+Open **Walmart Sync > Dashboard & Exemptions** and verify:
+
+- Module/write/cron safety indicators are correct.
+- Unique, matched, unmatched, and unverified counts match the CLI reconciliation report.
+- Catalog refresh completes without a Walmart write.
+- All three CSV download buttons work.
+- CSV preview reports a valid row count without changing statuses.
+- Applying a test CSV updates only the selected local statuses.
+- The grid Approved mass action requires confirmation.
+
+Review both exemption CSV files. The Walmart request file is not submission-ready until every missing Product URL has been supplied and checked. Mark older request SKUs with the dry-run-first exemption importer before generating the final `--scope=new` request file.
+
+For a Magento custom-option SKU, verify that the grid shows the parent Magento SKU, mapping type `custom_option`, and the correct option title. Only after the mapping and exemption are confirmed, configure the local controls and preview:
 
 ```bash
 php bin/magento walmart:sku:configure --sku=TEST-OPTION-SKU --mapping-verified=yes --exemption=approved
 php bin/magento walmart:inventory:preview --sku=TEST-OPTION-SKU
 ```
 
-This configuration command updates only the local Magento mapping controls. It does not call Walmart.
+This configuration command updates only local Magento mapping controls. It does not call Walmart.
 
 ## One-product write canary
 

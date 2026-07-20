@@ -5,10 +5,13 @@
         <add id="Sandy_WalmartSync::menu" title="Walmart Sync" module="Sandy_WalmartSync"
              sortOrder="90" resource="Sandy_WalmartSync::root"/>
         <add id="Sandy_WalmartSync::sku_grid" title="Known Walmart SKUs" module="Sandy_WalmartSync"
-             sortOrder="10" parent="Sandy_WalmartSync::menu" action="sandy_walmartsync/sku/index"
+             sortOrder="20" parent="Sandy_WalmartSync::menu" action="sandy_walmartsync/sku/index"
+             resource="Sandy_WalmartSync::operations"/>
+        <add id="Sandy_WalmartSync::dashboard" title="Dashboard &amp; Exemptions" module="Sandy_WalmartSync"
+             sortOrder="10" parent="Sandy_WalmartSync::menu" action="sandy_walmartsync/dashboard/index"
              resource="Sandy_WalmartSync::operations"/>
         <add id="Sandy_WalmartSync::configuration" title="Configuration" module="Sandy_WalmartSync"
-             sortOrder="20" parent="Sandy_WalmartSync::menu" action="adminhtml/system_config/edit/section/sandy_walmartsync"
+             sortOrder="30" parent="Sandy_WalmartSync::menu" action="adminhtml/system_config/edit/section/sandy_walmartsync"
              resource="Sandy_WalmartSync::config"/>
     </menu>
 </config>

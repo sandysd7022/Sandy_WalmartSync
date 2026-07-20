@@ -1,32 +1,52 @@
 # Stage 1 release notes
 
+## 1.3.0
+
+- Added a client-facing Magento Admin dashboard under **Walmart Sync > Dashboard & Exemptions**.
+- Added plain-language module, write-operation, and cron safety indicators.
+- Added unique, matched, unmatched, and unverified custom-option catalog totals.
+- Added a read-only full catalog refresh button and direct access to the SKU review grid.
+- Added browser downloads for the master review CSV, complete request CSV, and new-requests-only CSV.
+- Added guarded Admin CSV validation/application for previous, pending, approved, rejected, and unknown exemption statuses.
+- Added grid mass actions for local exemption statuses, including an explicit warning before setting Approved.
+- Admin exemption controls never call Walmart. Destructive zero-all and sync-all controls remain CLI-only during the review stage.
+
+## 1.2.0
+
+- Added `walmart:catalog:reconcile`, a read-only report for unique SKU, mapping, publication, and exemption counts.
+- Added `walmart:exemption:export` to create a Walmart-format request CSV plus an internal master review CSV.
+- The review export explicitly identifies unresolved product URLs and prevents treating generated output as submission-ready.
+- Added `walmart:exemption:import` with dry-run-by-default behavior and exact execution confirmation.
+- Bulk exemption imports support Walmart result files with SKU/status columns and older request files through `--default-status=previously_requested`.
+- Bulk status imports validate the complete CSV before writing and never call the Walmart API.
+
 ## 1.1.0
 
 - Added Magento custom-option SKU matching, including option value SKUs such as `SD0205J`.
 - Added mapping type, option identifiers/title, manual mapping verification, and per-Walmart-SKU exemption status.
-- Custom-option mappings now use the parent Magento product quantity unchanged; the configured global buffer still applies and should remain `0` for exact quantities.
+- Custom-option mappings use the parent Magento product quantity unchanged; the configured global buffer still applies and should remain `0` for exact quantities.
 - Added safety gates: custom-option mappings cannot send positive inventory until manually verified and individually marked exemption-approved.
-- Added `walmart:sku:configure` to manage the local verification and exemption controls without changing Walmart.
+- Added `walmart:sku:configure` to manage local verification and exemption controls without changing Walmart.
 - Added an installed-module schema upgrade and new grid columns for mapping review.
 - Product content, titles, prices, images, UPCs, and GTINs remain read-only and are not modified by this release.
 
 ## 1.0.6
 
-- Clarified the catalog import result by reporting API records processed, unique Walmart SKUs, repeated SKU records, and errors separately.
-- Kept the existing unique-SKU upsert behavior, so repeated API records update one local SKU row instead of creating duplicates.
+- Clarified catalog import results by reporting API records processed, unique Walmart SKUs, repeated SKU records, and errors separately.
+- Kept unique-SKU upsert behavior, so repeated API records update one local SKU row instead of creating duplicates.
 
 ## 1.0.5
 
-- Add the required `nextCursor=*` pagination marker for direct cursor-based All Items requests.
-- Use Walmart's documented `offset` and `limit` pagination for the full catalog import, avoiding missing or unchanged cursor responses.
-- Track API records consumed separately from successfully imported records to prevent skipped pages.
+- Added the required `nextCursor=*` pagination marker for direct cursor-based All Items requests.
+- Used Walmart offset/limit pagination for full catalog imports.
+- Tracked API records consumed separately from successfully imported records to prevent skipped pages.
 
 ## 1.0.4
 
 - Added direct support for `ItemResponse`, nested `items`, `payload`, and `data.items` All Items response envelopes.
-- Added a bounded recursive fallback that recognizes item lists by their SKU and item metadata fields.
-- Added recursive `nextCursor`, `totalItems`, and `totalCount` discovery for safe pagination and response validation.
-- Added the read-only `walmart:catalog:diagnose` command, which prints key names and data types but hides all values and credentials.
+- Added a bounded recursive fallback that recognizes item lists by SKU and item metadata fields.
+- Added recursive cursor/total discovery for response validation.
+- Added the read-only `walmart:catalog:diagnose` command, which prints structures while hiding values and credentials.
 
 ## 1.0.3
 

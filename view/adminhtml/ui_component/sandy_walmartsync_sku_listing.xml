@@ -29,6 +29,26 @@
         <bookmark name="bookmarks"/>
         <columnsControls name="columns_controls"/>
         <filters name="listing_filters"/>
+        <massaction name="listing_massaction">
+            <action name="exemption_unknown">
+                <settings><type>exemption_unknown</type><label translate="true">Set Exemption: Unknown</label><url path="sandy_walmartsync/sku/massExemption/status/unknown"/></settings>
+            </action>
+            <action name="exemption_previous">
+                <settings><type>exemption_previous</type><label translate="true">Set Exemption: Previously Requested</label><url path="sandy_walmartsync/sku/massExemption/status/previously_requested"/></settings>
+            </action>
+            <action name="exemption_pending">
+                <settings><type>exemption_pending</type><label translate="true">Set Exemption: Pending Review</label><url path="sandy_walmartsync/sku/massExemption/status/pending"/></settings>
+            </action>
+            <action name="exemption_approved">
+                <settings>
+                    <type>exemption_approved</type><label translate="true">Set Exemption: Approved</label><url path="sandy_walmartsync/sku/massExemption/status/approved"/>
+                    <confirm><message translate="true">Only use Approved when Walmart has confirmed these SKUs. Continue?</message></confirm>
+                </settings>
+            </action>
+            <action name="exemption_rejected">
+                <settings><type>exemption_rejected</type><label translate="true">Set Exemption: Rejected</label><url path="sandy_walmartsync/sku/massExemption/status/rejected"/></settings>
+            </action>
+        </massaction>
         <paging name="listing_paging"/>
     </listingToolbar>
     <columns name="walmart_sku_columns">
