@@ -66,9 +66,11 @@ class SkuStorage
             $old = isset($existing[$field]) ? (string)$existing[$field] : '';
             $new = isset($mapping[$field]) ? (string)$mapping[$field] : '';
             if ($old !== $new) {
+                // Exemption history belongs to the Walmart SKU, not to its current
+                // Magento mapping. Preserve it while requiring the changed mapping
+                // to be reviewed again.
                 $this->updateStatus($sku, [
                     'mapping_verified' => 0,
-                    'sku_exemption_status' => 'unknown',
                     'is_eligible' => 0,
                     'eligibility_reason' => 'Mapping changed and requires verification.'
                 ]);

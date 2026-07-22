@@ -3,6 +3,7 @@ namespace Sandy\WalmartSync\Model;
 
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductCollectionFactory;
+use Magento\Catalog\Model\ResourceModel\Product\Action as ProductAction;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Sandy\WalmartSync\Model\Api\Client;
 
@@ -15,6 +16,7 @@ class CatalogImporter
     private $config;
     private $productCollectionFactory;
     private $customOptionMatcher;
+    private $productAction;
 
     public function __construct(
         Client $client,
@@ -23,7 +25,8 @@ class CatalogImporter
         OperationLogger $logger,
         Config $config,
         ProductCollectionFactory $productCollectionFactory,
-        CustomOptionMatcher $customOptionMatcher
+        CustomOptionMatcher $customOptionMatcher,
+        ProductAction $productAction
     ) {
         $this->client = $client;
         $this->storage = $storage;
@@ -32,6 +35,7 @@ class CatalogImporter
         $this->config = $config;
         $this->productCollectionFactory = $productCollectionFactory;
         $this->customOptionMatcher = $customOptionMatcher;
+        $this->productAction = $productAction;
     }
 
     public function execute($limit = null)
@@ -61,6 +65,7 @@ class CatalogImporter
                     continue;
                 }
                 $uniqueSkus[$sku] = true;
+                $existing = $this->storage->getByWalmartSku($sku);
                 $match = $this->matchMagentoProduct($sku);
                 $mapping = [
                     'mapping_type' => isset($match['mapping_type']) ? $match['mapping_type'] : 'unmatched',
@@ -78,6 +83,7 @@ class CatalogImporter
                     'published_status' => $this->value($item, ['publishedStatus', 'published_status']),
                     'lifecycle_status' => $this->value($item, ['lifecycleStatus', 'lifecycle_status'])
                 ], $mapping));
+                $this->syncProductStatusAfterMappingChange($existing, $mapping);
                 $imported++;
             }
             if ($reportedTotal > $recordsSeen && $items) {
@@ -101,11 +107,9 @@ class CatalogImporter
     {
         try {
             $product = $this->productRepository->get($walmartSku, false, null, true);
-            $optionMatch = $this->customOptionMatcher->match($walmartSku);
-            if ($optionMatch && isset($optionMatch['mapping_type']) && $optionMatch['mapping_type'] === 'custom_option' &&
-                isset($optionMatch['id']) && (int)$optionMatch['id'] === (int)$product->getId()) {
-                return $optionMatch;
-            }
+            // A real Magento product SKU is authoritative. Some default custom-option
+            // values repeat the parent SKU; those must not turn a direct product match
+            // into a per-option mapping.
             return ['mapping_type' => 'product_sku', 'sku' => $product->getSku(), 'id' => (int)$product->getId()];
         } catch (NoSuchEntityException $exception) {
             $collection = $this->productCollectionFactory->create();
@@ -119,6 +123,24 @@ class CatalogImporter
             $optionMatch = $this->customOptionMatcher->match($walmartSku);
             return $optionMatch ?: ['mapping_type' => 'unmatched', 'sku' => null, 'id' => null];
         }
+    }
+
+    private function syncProductStatusAfterMappingChange($existing, array $mapping)
+    {
+        if (!is_array($existing) || empty($mapping['product_id']) || empty($mapping['magento_sku'])) {
+            return;
+        }
+        $oldType = isset($existing['mapping_type']) ? (string)$existing['mapping_type'] : '';
+        $newType = isset($mapping['mapping_type']) ? (string)$mapping['mapping_type'] : '';
+        if ($oldType === $newType || !in_array($newType, ['product_sku', 'product_attribute'], true)) {
+            return;
+        }
+        $status = isset($existing['sku_exemption_status']) ? (string)$existing['sku_exemption_status'] : 'unknown';
+        $this->productAction->updateAttributes(
+            [(int)$mapping['product_id']],
+            ['walmart_exemption_status' => $status],
+            0
+        );
     }
 
     private function extractItems(array $response)

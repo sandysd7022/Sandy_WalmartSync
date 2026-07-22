@@ -28,7 +28,8 @@ class InstallData implements InstallDataInterface
             'walmart_exemption_status' => [
                 'type' => 'varchar', 'label' => 'Walmart Return Exemption Status', 'input' => 'select',
                 'source' => 'Sandy\\WalmartSync\\Model\\Product\\Attribute\\Source\\ExemptionStatus',
-                'default' => 'unknown', 'required' => false, 'sort_order' => 20
+                'default' => 'unknown', 'required' => false, 'sort_order' => 20,
+                'note' => 'Product-level status for a direct Walmart SKU match. Custom-option SKUs can have separate statuses; review those under Walmart Sync > Known Walmart SKUs. Unknown = not recorded; Previously Requested = historical request, not approval; Pending Review = submitted; Approved = Walmart confirmed; Rejected = Walmart declined.'
             ],
             'walmart_sku' => [
                 'type' => 'varchar', 'label' => 'Walmart SKU', 'input' => 'text',

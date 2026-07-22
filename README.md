@@ -69,7 +69,7 @@ Export a Walmart-format request CSV and a separate internal review CSV:
 php bin/magento walmart:exemption:export --scope=all
 ```
 
-The files are written to `var/export` by default. The request CSV uses Walmart's eight-column template. The review CSV includes mapping, publication, exemption, and missing-URL information. Do not submit the request CSV until every missing Product URL is filled and validated.
+The files are written to `var/export` by default as `walmart-return-exemption-all-skus.csv` or `walmart-return-exemption-new-requests-only.csv`, with a matching `-review.csv`. The request CSV uses Walmart's eight-column template. The review CSV includes mapping, publication, exemption, and missing-URL information. Do not submit the request CSV until every missing Product URL is filled and validated.
 
 To identify SKUs from an older request, first convert the old workbook to CSV and preview it using a default status:
 
@@ -85,8 +85,8 @@ The import validates the entire file first. If any row is invalid, no status is 
 After the client submits the final request CSV, mark those same rows Pending with a dry run first:
 
 ```bash
-php bin/magento walmart:exemption:import --file=var/export/walmart-return-exemption-request.csv --default-status=pending
-php bin/magento walmart:exemption:import --file=var/export/walmart-return-exemption-request.csv --default-status=pending --execute --confirm="IMPORT-EXEMPTIONS"
+php bin/magento walmart:exemption:import --file=var/export/walmart-return-exemption-new-requests-only.csv --default-status=pending
+php bin/magento walmart:exemption:import --file=var/export/walmart-return-exemption-new-requests-only.csv --default-status=pending --execute --confirm="IMPORT-EXEMPTIONS"
 ```
 
 ## Safe one-product test

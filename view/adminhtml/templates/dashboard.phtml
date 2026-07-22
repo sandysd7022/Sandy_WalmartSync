@@ -26,9 +26,24 @@ $escape = function ($value) use ($block) {
             <tr><th><?= $escape(__('Unverified Custom Options')) ?></th><td><?= (int)$summary['mapping_unverified'] ?></td></tr>
         </table>
         <h3><?= $escape(__('Return Exemption Status Totals')) ?></h3>
+        <?php $statusNotes = [
+            'unknown' => __('No request information is recorded.'),
+            'previously_requested' => __('Included in an older request; approval is not confirmed.'),
+            'pending' => __('Submitted to Walmart and awaiting a decision.'),
+            'approved' => __('Walmart confirmed the exemption; inventory can sync when all other safety checks pass.'),
+            'rejected' => __('Walmart declined the exemption; the SKU remains ineligible for positive inventory sync.')
+        ]; ?>
         <table class="admin__table-secondary">
             <?php foreach ($summary['exemption_statuses'] as $status => $count): ?>
-                <tr><th><?= $escape(ucwords(str_replace('_', ' ', $status))) ?></th><td><?= (int)$count ?></td></tr>
+                <tr>
+                    <th>
+                        <?= $escape(ucwords(str_replace('_', ' ', $status))) ?>
+                        <?php if (isset($statusNotes[$status])): ?>
+                            <div class="note"><?= $escape($statusNotes[$status]) ?></div>
+                        <?php endif; ?>
+                    </th>
+                    <td><?= (int)$count ?></td>
+                </tr>
             <?php endforeach; ?>
         </table>
         <h3><?= $escape(__('Walmart Publication Status Totals')) ?></h3>

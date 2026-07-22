@@ -26,7 +26,13 @@ class Download extends Action
             $type = $this->getRequest()->getParam('type', 'request');
             $export = $this->exporter->execute(null, $scope);
             $path = $type === 'review' ? $export['review_path'] : $export['path'];
-            $name = basename($path);
+            if ($type === 'review') {
+                $name = 'walmart-return-exemption-master-review.csv';
+            } elseif ($scope === 'new') {
+                $name = 'walmart-return-exemption-new-requests-only.csv';
+            } else {
+                $name = 'walmart-return-exemption-all-skus.csv';
+            }
             $result = $this->rawFactory->create();
             $result->setHeader('Content-Type', 'text/csv; charset=UTF-8');
             $result->setHeader('Content-Disposition', 'attachment; filename="' . $name . '"');

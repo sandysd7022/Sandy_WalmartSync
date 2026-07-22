@@ -21,7 +21,7 @@ class Exporter
         if (!in_array($scope, ['all', 'new'], true)) {
             throw new \InvalidArgumentException('Scope must be all or new.');
         }
-        $path = $this->resolvePath($file);
+        $path = $this->resolvePath($file, $scope);
         $reviewPath = preg_replace('/\.csv$/i', '', $path) . '-review.csv';
         $this->ensureDirectory(dirname($path));
 
@@ -99,11 +99,14 @@ class Exporter
         ];
     }
 
-    private function resolvePath($file)
+    private function resolvePath($file, $scope)
     {
         $file = trim((string)$file);
         if ($file === '') {
-            return $this->directoryList->getPath(DirectoryList::VAR_DIR) . DIRECTORY_SEPARATOR . 'export' . DIRECTORY_SEPARATOR . 'walmart-return-exemption-request.csv';
+            $name = $scope === 'new'
+                ? 'walmart-return-exemption-new-requests-only.csv'
+                : 'walmart-return-exemption-all-skus.csv';
+            return $this->directoryList->getPath(DirectoryList::VAR_DIR) . DIRECTORY_SEPARATOR . 'export' . DIRECTORY_SEPARATOR . $name;
         }
         if (strtolower(substr($file, -4)) !== '.csv') {
             $file .= '.csv';

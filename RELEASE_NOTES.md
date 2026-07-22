@@ -1,5 +1,24 @@
 # Stage 1 release notes
 
+## 1.3.3
+
+- Preserve per-Walmart-SKU exemption history across every Magento mapping change.
+- Continue resetting mapping verification and eligibility when a mapping changes.
+- Mirror the preserved status to a newly selected direct Magento product mapping.
+- Prevent historical requests from reappearing in New Requests Only after catalog reclassification.
+
+## 1.3.2
+
+- Treat a Walmart SKU that exactly matches a Magento product SKU as a direct product mapping, even when the default custom-option value repeats the same SKU.
+- Preserve the Walmart-SKU exemption status when that same-product mapping is reclassified from custom option to direct product.
+- Copy the preserved status to the Magento product attribute during catalog refresh.
+- Added plain-language exemption status explanations to the dashboard and product attribute help text.
+
+## 1.3.1
+
+- Assigned distinct filenames to the master review, all-SKU request, and new-requests-only downloads.
+- Kept the filtering rule unchanged: New Requests Only excludes Previously Requested, Pending, Approved, and Rejected SKUs.
+
 ## 1.3.0
 
 - Added a client-facing Magento Admin dashboard under **Walmart Sync > Dashboard & Exemptions**.
