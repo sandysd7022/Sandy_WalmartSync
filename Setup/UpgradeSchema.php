@@ -29,5 +29,24 @@ class UpgradeSchema implements UpgradeSchemaInterface
             }
             $setup->endSetup();
         }
+        if (version_compare($context->getVersion(), '1.4.0', '<')) {
+            $setup->startSetup();
+            $table = $setup->getTable('sandy_walmartsync_sku');
+            $connection = $setup->getConnection();
+            $columns = [
+                'sync_enabled' => ['type' => Table::TYPE_SMALLINT, 'nullable' => false, 'default' => 0, 'comment' => 'Magento Product Walmart Sync Enabled'],
+                'is_meltable' => ['type' => Table::TYPE_SMALLINT, 'nullable' => false, 'default' => 0, 'comment' => 'Meltable Product Result'],
+                'seasonal_status' => ['type' => Table::TYPE_TEXT, 'length' => 32, 'nullable' => true, 'comment' => 'Meltable Seasonal Status'],
+                'magento_qty' => ['type' => Table::TYPE_DECIMAL, 'length' => '12,4', 'nullable' => true, 'comment' => 'Last Previewed Magento Quantity'],
+                'calculated_qty' => ['type' => Table::TYPE_DECIMAL, 'length' => '12,4', 'nullable' => true, 'comment' => 'Last Calculated Walmart Quantity'],
+                'sync_action' => ['type' => Table::TYPE_TEXT, 'length' => 16, 'nullable' => false, 'default' => 'skip', 'comment' => 'Last Calculated Sync Action']
+            ];
+            foreach ($columns as $name => $definition) {
+                if (!$connection->tableColumnExists($table, $name)) {
+                    $connection->addColumn($table, $name, $definition);
+                }
+            }
+            $setup->endSetup();
+        }
     }
 }

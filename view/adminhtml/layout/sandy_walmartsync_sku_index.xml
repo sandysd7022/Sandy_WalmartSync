@@ -1,8 +1,15 @@
 <?xml version="1.0"?>
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <head>
+        <css src="Sandy_WalmartSync::css/walmart-sync.css"/>
+    </head>
     <body>
         <referenceContainer name="content">
+            <block class="Magento\Backend\Block\Template"
+                   name="sandy_walmartsync.sku.guide"
+                   template="Sandy_WalmartSync::sku/guide.phtml"
+                   before="sandy_walmartsync_sku_listing"/>
             <uiComponent name="sandy_walmartsync_sku_listing"/>
         </referenceContainer>
     </body>

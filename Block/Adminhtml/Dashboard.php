@@ -38,15 +38,4 @@ class Dashboard extends Template
         return $this->moduleConfig->isCronEnabled();
     }
 
-    public function getStatusOptions()
-    {
-        return [
-            '' => __('Use Status column from CSV'),
-            'previously_requested' => __('Previously Requested'),
-            'pending' => __('Pending Review'),
-            'approved' => __('Approved'),
-            'rejected' => __('Rejected'),
-            'unknown' => __('Unknown')
-        ];
-    }
 }

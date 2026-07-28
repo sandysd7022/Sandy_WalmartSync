@@ -1,0 +1,120 @@
+.walmart-sync-dashboard .walmart-status-ok {
+    background: #e9f7e9;
+}
+
+.walmart-sync-dashboard .walmart-status-safe {
+    background: #eef7ff;
+}
+
+.walmart-sync-dashboard .walmart-status-live {
+    background: #fff2cc;
+    color: #7a4d00;
+}
+
+.walmart-sync-dashboard .walmart-status-info {
+    background: #eaf3ff;
+}
+
+.walmart-sync-dashboard .walmart-status-warning {
+    background: #fff6d9;
+    color: #6f4e00;
+}
+
+.walmart-sync-dashboard .walmart-status-danger {
+    background: #fde7e7;
+    color: #9b1c1c;
+}
+
+.walmart-sync-dashboard .admin__table-secondary tr[class^="walmart-status"] th,
+.walmart-sync-dashboard .admin__table-secondary tr[class^="walmart-status"] td {
+    padding: 1rem;
+}
+
+.walmart-grid-legend {
+    margin: 1.5rem 0;
+}
+
+.walmart-grid-legend span {
+    display: inline-block;
+    margin: 0 .8rem .5rem 0;
+    padding: .6rem 1rem;
+    border-left: 4px solid;
+    font-weight: 600;
+}
+
+.walmart-legend-mapping {
+    background: #fff6d9;
+    border-color: #d6a700 !important;
+}
+
+.walmart-legend-control {
+    background: #eaf3ff;
+    border-color: #357abd !important;
+}
+
+.walmart-legend-error {
+    background: #fde7e7;
+    border-color: #c62828 !important;
+}
+
+/*
+ * Magento 2.3 does not consistently expose data-index on body cells.
+ * These classes are assigned through each UI column's fieldClass setting.
+ */
+.admin__data-grid-wrap th.walmart-cell-mapping,
+.admin__data-grid-wrap td.walmart-cell-mapping {
+    background-color: #fff1b8 !important;
+    box-shadow: inset 3px 0 #d6a700;
+    color: #4a3800 !important;
+}
+
+.admin__data-grid-wrap th.walmart-cell-control,
+.admin__data-grid-wrap td.walmart-cell-control {
+    background-color: #dbeeff !important;
+    box-shadow: inset 3px 0 #357abd;
+    color: #173f66 !important;
+}
+
+.admin__data-grid-wrap th.walmart-cell-result,
+.admin__data-grid-wrap td.walmart-cell-result {
+    background-color: #ffd9d9 !important;
+    box-shadow: inset 3px 0 #c62828;
+    color: #791b1b !important;
+}
+
+.admin__data-grid-wrap th.walmart-cell-reference,
+.admin__data-grid-wrap td.walmart-cell-reference {
+    background-color: #eeeeee !important;
+    color: #4d4d4d !important;
+}
+
+/* Retain data-index support for header cells and newer Magento renderers. */
+.admin__data-grid-wrap [data-index="mapping_type"],
+.admin__data-grid-wrap [data-index="mapping_verified"],
+.admin__data-grid-wrap [data-index="is_eligible"],
+.admin__data-grid-wrap [data-index="eligibility_reason"],
+.admin__data-grid-wrap [data-index="published_status"] {
+    background-color: #fff1b8 !important;
+}
+
+.admin__data-grid-wrap [data-index="current_qty"],
+.admin__data-grid-wrap [data-index="magento_sku"],
+.admin__data-grid-wrap [data-index="sync_enabled"],
+.admin__data-grid-wrap [data-index="magento_qty"],
+.admin__data-grid-wrap [data-index="is_meltable"],
+.admin__data-grid-wrap [data-index="seasonal_status"],
+.admin__data-grid-wrap [data-index="calculated_qty"],
+.admin__data-grid-wrap [data-index="sync_action"],
+.admin__data-grid-wrap [data-index="last_synced_at"] {
+    background-color: #dbeeff !important;
+}
+
+.admin__data-grid-wrap [data-index="last_sync_status"],
+.admin__data-grid-wrap [data-index="last_error"] {
+    background-color: #ffd9d9 !important;
+}
+
+.admin__data-grid-wrap [data-index="updated_at"],
+.admin__data-grid-wrap [data-index="sku_exemption_status"] {
+    background-color: #eeeeee !important;
+}

@@ -16,6 +16,13 @@
                 <cron_enabled>0</cron_enabled>
                 <cron_expression>*/15 * * * *</cron_expression>
             </safety>
+            <seasonal>
+                <enabled>1</enabled>
+                <category_ids></category_ids>
+                <zero_start>05-01</zero_start>
+                <zero_end>11-30</zero_end>
+                <timezone>America/New_York</timezone>
+            </seasonal>
         </sandy_walmartsync>
     </default>
 </config>

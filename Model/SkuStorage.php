@@ -72,7 +72,13 @@ class SkuStorage
                 $this->updateStatus($sku, [
                     'mapping_verified' => 0,
                     'is_eligible' => 0,
-                    'eligibility_reason' => 'Mapping changed and requires verification.'
+                    'eligibility_reason' => 'Mapping changed and requires verification.',
+                    'sync_enabled' => 0,
+                    'is_meltable' => 0,
+                    'seasonal_status' => 'unknown',
+                    'magento_qty' => null,
+                    'calculated_qty' => null,
+                    'sync_action' => 'skip'
                 ]);
                 return;
             }
@@ -95,6 +101,45 @@ class SkuStorage
             $this->resource->getTableName('sandy_walmartsync_sku'),
             $update,
             ['walmart_sku = ?' => $sku]
+        );
+    }
+
+    public function verifyMappingEntityIds(array $entityIds)
+    {
+        $entityIds = array_values(array_unique(array_filter(array_map('intval', $entityIds))));
+        if (!$entityIds) {
+            return 0;
+        }
+        return (int)$this->resource->getConnection()->update(
+            $this->resource->getTableName('sandy_walmartsync_sku'),
+            [
+                'mapping_verified' => 1,
+                'is_eligible' => 0,
+                'eligibility_reason' => 'Mapping verified. Run inventory preview to calculate the current action.',
+                'sync_action' => 'skip'
+            ],
+            ['entity_id IN (?)' => $entityIds, 'mapping_type = ?' => 'custom_option']
+        );
+    }
+
+    public function updateProductSyncState(array $productIds, $enabled)
+    {
+        $productIds = array_values(array_unique(array_filter(array_map('intval', $productIds))));
+        if (!$productIds) {
+            return 0;
+        }
+        $enabled = (bool)$enabled;
+        return (int)$this->resource->getConnection()->update(
+            $this->resource->getTableName('sandy_walmartsync_sku'),
+            [
+                'sync_enabled' => $enabled ? 1 : 0,
+                'is_eligible' => 0,
+                'eligibility_reason' => $enabled
+                    ? 'Product sync enabled. Run inventory preview to calculate the current action.'
+                    : 'Walmart Sync is not enabled for the product.',
+                'sync_action' => 'skip'
+            ],
+            ['product_id IN (?)' => $productIds]
         );
     }
 }

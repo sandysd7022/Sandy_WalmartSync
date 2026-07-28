@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/crontab.xsd">
-    <group id="default">
+    <group id="wm_sync">
         <job name="sandy_walmartsync_inventory" instance="Sandy\WalmartSync\Cron\InventorySync" method="execute">
             <config_path>sandy_walmartsync/safety/cron_expression</config_path>
         </job>

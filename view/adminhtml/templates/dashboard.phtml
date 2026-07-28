@@ -4,34 +4,44 @@ $escape = function ($value) use ($block) {
     return $block->escapeHtml($value);
 };
 ?>
-<div class="admin__fieldset-wrapper">
+<div class="admin__fieldset-wrapper walmart-sync-dashboard">
     <div class="admin__fieldset-wrapper-title"><strong class="title"><?= $escape(__('Safety Status')) ?></strong></div>
     <div class="admin__fieldset-wrapper-content">
         <table class="admin__table-secondary">
-            <tr><th><?= $escape(__('Module')) ?></th><td><?= $escape($block->isModuleEnabled() ? __('Enabled') : __('Disabled')) ?></td></tr>
-            <tr><th><?= $escape(__('Walmart Write Operations')) ?></th><td><strong><?= $escape($block->isWriteEnabled() ? __('ENABLED') : __('Disabled')) ?></strong></td></tr>
-            <tr><th><?= $escape(__('Automatic Inventory Cron')) ?></th><td><strong><?= $escape($block->isCronEnabled() ? __('ENABLED') : __('Disabled')) ?></strong></td></tr>
+            <tr class="<?= $block->isModuleEnabled() ? 'walmart-status-ok' : 'walmart-status-danger' ?>"><th><?= $escape(__('Module')) ?></th><td><strong><?= $escape($block->isModuleEnabled() ? __('Enabled') : __('Disabled')) ?></strong></td></tr>
+            <tr class="<?= $block->isWriteEnabled() ? 'walmart-status-live' : 'walmart-status-safe' ?>"><th><?= $escape(__('Walmart Write Operations')) ?></th><td><strong><?= $escape($block->isWriteEnabled() ? __('ENABLED — LIVE WRITES ALLOWED') : __('Disabled — Safe')) ?></strong></td></tr>
+            <tr class="<?= $block->isCronEnabled() ? 'walmart-status-live' : 'walmart-status-safe' ?>"><th><?= $escape(__('Automatic Inventory Cron')) ?></th><td><strong><?= $escape($block->isCronEnabled() ? __('ENABLED — AUTOMATIC') : __('Disabled — Manual Only')) ?></strong></td></tr>
         </table>
-        <p class="note"><?= $escape(__('Keep Walmart writes and cron disabled while reviewing mappings and preparing exemptions.')) ?></p>
+        <p class="note"><?= $escape(__('Keep Walmart writes and cron disabled until mappings, meltable categories and the complete inventory preview are reviewed.')) ?></p>
     </div>
 </div>
 
-<div class="admin__fieldset-wrapper">
-    <div class="admin__fieldset-wrapper-title"><strong class="title"><?= $escape(__('Catalog Summary')) ?></strong></div>
+<div class="admin__fieldset-wrapper walmart-sync-dashboard">
+    <div class="admin__fieldset-wrapper-title"><strong class="title"><?= $escape(__('Inventory Readiness Summary')) ?></strong></div>
     <div class="admin__fieldset-wrapper-content">
         <table class="admin__table-secondary">
             <tr><th><?= $escape(__('Unique Walmart SKUs')) ?></th><td><?= (int)$summary['total'] ?></td></tr>
             <tr><th><?= $escape(__('Matched to Magento')) ?></th><td><?= (int)$summary['matched'] ?></td></tr>
-            <tr><th><?= $escape(__('Unmatched')) ?></th><td><?= (int)$summary['unmatched'] ?></td></tr>
-            <tr><th><?= $escape(__('Unverified Custom Options')) ?></th><td><?= (int)$summary['mapping_unverified'] ?></td></tr>
+            <tr class="<?= (int)$summary['unmatched'] ? 'walmart-status-warning' : 'walmart-status-ok' ?>"><th><?= $escape(__('Unmatched — Review Required')) ?></th><td><strong><?= (int)$summary['unmatched'] ?></strong></td></tr>
+            <tr class="<?= (int)$summary['mapping_unverified'] ? 'walmart-status-warning' : 'walmart-status-ok' ?>"><th><?= $escape(__('Unverified Custom Options — Review Required')) ?></th><td><strong><?= (int)$summary['mapping_unverified'] ?></strong></td></tr>
+            <tr class="walmart-status-info"><th><?= $escape(__('Walmart SKUs with Product Sync Enabled')) ?></th><td><strong><?= (int)$summary['sync_enabled'] ?></strong></td></tr>
+            <tr class="walmart-status-info"><th><?= $escape(__('Ready to Sync (Last Preview)')) ?></th><td><strong><?= (int)$summary['ready_to_sync'] ?></strong></td></tr>
+            <tr class="walmart-status-info"><th><?= $escape(__('SEND Actions (Last Preview)')) ?></th><td><strong><?= (int)$summary['send_actions'] ?></strong></td></tr>
+            <tr><th><?= $escape(__('SKIP Actions (Last Preview)')) ?></th><td><?= (int)$summary['skip_actions'] ?></td></tr>
+            <tr><th><?= $escape(__('Meltable Magento Products (Last Preview)')) ?></th><td><?= (int)$summary['meltable_products'] ?></td></tr>
+            <tr><th><?= $escape(__('Affected Meltable Walmart SKUs (Last Preview)')) ?></th><td><?= (int)$summary['meltable_skus'] ?></td></tr>
+            <tr class="walmart-status-warning"><th><?= $escape(__('Seasonally Forced to Zero (Last Preview)')) ?></th><td><strong><?= (int)$summary['seasonal_zero'] ?></strong></td></tr>
+            <tr class="<?= (int)$summary['sync_errors'] ? 'walmart-status-danger' : 'walmart-status-ok' ?>"><th><?= $escape(__('Rows with Last Sync Error')) ?></th><td><strong><?= (int)$summary['sync_errors'] ?></strong></td></tr>
+            <tr class="walmart-status-info"><th><?= $escape(__('Latest Actual Sync Time (UTC)')) ?></th><td><strong><?= $escape($summary['last_sync_at'] ?: __('Never')) ?></strong></td></tr>
         </table>
-        <h3><?= $escape(__('Return Exemption Status Totals')) ?></h3>
+        <p class="note"><?= $escape(__('Preview totals are refreshed by walmart:inventory:preview and do not change Walmart inventory.')) ?></p>
+        <h3><?= $escape(__('Return Exemption History (Reference Only)')) ?></h3>
         <?php $statusNotes = [
             'unknown' => __('No request information is recorded.'),
             'previously_requested' => __('Included in an older request; approval is not confirmed.'),
             'pending' => __('Submitted to Walmart and awaiting a decision.'),
-            'approved' => __('Walmart confirmed the exemption; inventory can sync when all other safety checks pass.'),
-            'rejected' => __('Walmart declined the exemption; the SKU remains ineligible for positive inventory sync.')
+            'approved' => __('Walmart confirmed the exemption. This is historical information only.'),
+            'rejected' => __('Walmart declined the exemption. Inventory synchronization is handled separately.')
         ]; ?>
         <table class="admin__table-secondary">
             <?php foreach ($summary['exemption_statuses'] as $status => $count): ?>
@@ -52,57 +62,7 @@ $escape = function ($value) use ($block) {
                 <tr><th><?= $escape(ucwords(str_replace('_', ' ', $status))) ?></th><td><?= (int)$count ?></td></tr>
             <?php endforeach; ?>
         </table>
-        <form method="post" action="<?= $block->escapeUrl($block->getUrl('sandy_walmartsync/dashboard/importCatalog')) ?>">
-            <?= $block->getBlockHtml('formkey') ?>
-            <button type="submit" class="action-default primary"><span><?= $escape(__('Refresh Complete Walmart Catalog (Read Only)')) ?></span></button>
-            <a class="action-default" href="<?= $block->escapeUrl($block->getUrl('sandy_walmartsync/sku/index')) ?>"><span><?= $escape(__('Open SKU Review Grid')) ?></span></a>
-        </form>
-        <p class="note"><?= $escape(__('A complete refresh can take several minutes. Wait for the success or error message before leaving the page.')) ?></p>
-    </div>
-</div>
-
-<div class="admin__fieldset-wrapper">
-    <div class="admin__fieldset-wrapper-title"><strong class="title"><?= $escape(__('Return Exemption Files')) ?></strong></div>
-    <div class="admin__fieldset-wrapper-content">
-        <p><?= $escape(__('Download the internal review first. The Walmart request file must not be submitted until missing Product URLs and previous requests are reviewed.')) ?></p>
-        <a class="action-default" href="<?= $block->escapeUrl($block->getUrl('sandy_walmartsync/exemption/download', ['type' => 'review', 'scope' => 'all'])) ?>"><span><?= $escape(__('Download Master Review CSV')) ?></span></a>
-        <a class="action-default" href="<?= $block->escapeUrl($block->getUrl('sandy_walmartsync/exemption/download', ['type' => 'request', 'scope' => 'all'])) ?>"><span><?= $escape(__('Download Walmart Request CSV')) ?></span></a>
-        <a class="action-default" href="<?= $block->escapeUrl($block->getUrl('sandy_walmartsync/exemption/download', ['type' => 'request', 'scope' => 'new'])) ?>"><span><?= $escape(__('Download New Requests Only')) ?></span></a>
-    </div>
-</div>
-
-<div class="admin__fieldset-wrapper">
-    <div class="admin__fieldset-wrapper-title"><strong class="title"><?= $escape(__('Validate or Apply Exemption Status CSV')) ?></strong></div>
-    <div class="admin__fieldset-wrapper-content">
-        <form method="post" enctype="multipart/form-data" action="<?= $block->escapeUrl($block->getUrl('sandy_walmartsync/exemption/import')) ?>">
-            <?= $block->getBlockHtml('formkey') ?>
-            <fieldset class="admin__fieldset">
-                <div class="admin__field">
-                    <label class="admin__field-label" for="status_file"><span><?= $escape(__('CSV File')) ?></span></label>
-                    <div class="admin__field-control"><input class="admin__control-file" type="file" id="status_file" name="status_file" accept=".csv" required/></div>
-                </div>
-                <div class="admin__field">
-                    <label class="admin__field-label" for="default_status"><span><?= $escape(__('Default Status')) ?></span></label>
-                    <div class="admin__field-control">
-                        <select class="admin__control-select" id="default_status" name="default_status">
-                            <?php foreach ($block->getStatusOptions() as $value => $label): ?>
-                                <option value="<?= $block->escapeHtmlAttr($value) ?>"><?= $escape($label) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                        <div class="note"><?= $escape(__('Use Previously Requested for the old request sheet, Pending after submission, or leave blank for Walmart result files containing a Status column.')) ?></div>
-                    </div>
-                </div>
-                <div class="admin__field">
-                    <label class="admin__field-label" for="apply_changes"><span><?= $escape(__('Apply Changes')) ?></span></label>
-                    <div class="admin__field-control"><input type="checkbox" id="apply_changes" name="apply_changes" value="1"/> <?= $escape(__('Unchecked = validation preview only')) ?></div>
-                </div>
-                <div class="admin__field">
-                    <label class="admin__field-label" for="confirm_changes"><span><?= $escape(__('Confirm')) ?></span></label>
-                    <div class="admin__field-control"><input type="checkbox" id="confirm_changes" name="confirm_changes" value="1"/> <?= $escape(__('I reviewed the CSV and want to update local Magento statuses.')) ?></div>
-                </div>
-                <div class="admin__field"><div class="admin__field-control"><button type="submit" class="action-default primary"><span><?= $escape(__('Process CSV')) ?></span></button></div></div>
-            </fieldset>
-        </form>
-        <p class="note"><?= $escape(__('This updates local Magento exemption controls only. It never submits data to Walmart.')) ?></p>
+        <a class="action-default primary" href="<?= $block->escapeUrl($block->getUrl('sandy_walmartsync/sku/index')) ?>"><span><?= $escape(__('Open SKU Review Grid')) ?></span></a>
+        <p class="note"><?= $escape(__('The complete Walmart catalog refresh is a long-running maintenance task and is intentionally not available in the browser. An administrator runs walmart:catalog:import from the server to avoid a browser or Cloudflare timeout.')) ?></p>
     </div>
 </div>

@@ -11,7 +11,9 @@ Magento Open Source 2.3.4 / PHP 7.1 module for safe Magento-to-Walmart catalog i
 - Preview commands never write to Walmart.
 - Zero execution creates and verifies a remote inventory backup before changing any SKU.
 - Zero-all requires the exact confirmation `ZERO-ALL` and does not support a partial `--limit` execution.
-- Inventory sync sends zero for every ineligible SKU.
+- Inventory sync skips disabled, unmatched, ambiguous and unverified mappings. It sends zero only for ready SKUs that are out of stock, manually forced to zero, disabled in Magento, or inside the meltable zero period.
+- Return-exemption status is reference history only and does not control inventory synchronization.
+- Meltable products can be detected from configured Magento categories and automatically held at zero from May 1 through November 30.
 - No Walmart order, shipment, cancellation, return, or tracking code is included.
 
 ## Install
@@ -38,21 +40,46 @@ Open `Stores > Configuration > Sandy > Walmart Sync`.
 
 Seller Center access alone does not provide API credentials. Obtain the seller's personal Client ID and Client Secret from Seller Center's API Integration / API Key Management area with Items, Inventory, Feeds, and Pricing permissions only. Orders permissions are not required.
 
-## Full catalog review and return exemptions
+### Meltable seasonal inventory
+
+Under **Meltable Seasonal Inventory**, enable the restriction and select the Magento categories Chocolates, Nougats, Marzipan and any future meltable categories. Category IDs are stored, so renaming a category does not break the rule. Products assigned to child categories are included.
+
+The defaults force calculated Walmart inventory to zero from `05-01` through `11-30` in `America/New_York`. From December 1 through April 30, the latest Magento quantity is used. The product attribute **Meltable Product Override** can force Yes or No for individual exceptions; Automatic follows category configuration. Custom-option Walmart SKUs inherit the parent product result.
+
+Test both seasons without changing the server clock:
+
+```bash
+php bin/magento walmart:inventory:preview --sku=TEST-MELTABLE-SKU --date=2026-07-15
+php bin/magento walmart:inventory:preview --sku=TEST-MELTABLE-SKU --date=2027-01-15
+```
+
+The July preview must calculate zero. The January preview must calculate the latest Magento quantity after the inventory buffer. Simulated-date previews do not persist their test result to the grid and never call Walmart write APIs.
+
+## Full catalog and mapping review
 
 ### Client-facing Admin workflow
 
-Open **Walmart Sync > Dashboard & Exemptions**. The page shows safety settings and catalog totals and provides:
+Open **Walmart Sync > Inventory Dashboard**. The page shows safety settings, inventory readiness totals, publication totals and read-only exemption history.
 
-- A read-only complete Walmart catalog refresh.
 - A link to the searchable SKU review grid.
-- Master review, complete request, and new-request-only CSV downloads.
-- CSV validation preview and guarded local status application.
-- Clear warnings that generated request files require Product URL review.
+- Counts for matched, unmatched, unverified, sync-enabled, ready and meltable records.
+- Clear reminders that the complete catalog refresh is a server maintenance task.
 
-The **Known Walmart SKUs** grid also includes mass actions for exemption statuses. The Approved action displays an explicit confirmation. These actions change Magento controls only and never call Walmart.
+The **Known Walmart SKUs** grid provides three guarded Admin actions:
 
-Bulk zero-all and sync-all remain CLI-only while the catalog is being reconciled. This prevents a client user from accidentally changing thousands of Walmart quantities from the dashboard.
+- **Verify Selected Custom-Option Mappings** after checking the Walmart SKU, parent Magento SKU and option title.
+- **Enable Sync for Selected Magento Products** to opt in each unique mapped parent product.
+- **Disable Sync for Selected Magento Products** to make the selected products SKIP.
+
+These actions change Magento controls only and never call Walmart. Custom-option verification is required once and remains valid until the mapping changes. Direct product SKU mappings do not require verification. Custom-option rows inherit sync enablement, meltable status and quantity from their parent Magento product.
+
+Sync enablement is intentionally managed from the SKU review grid rather than a duplicate product-edit toggle. The grid shows the effective stored value used by inventory preview and execution.
+
+The inventory cron recalculates and refreshes operational grid fields (Ready, reason, Magento quantity, meltable/seasonal result, calculated Walmart quantity, action, result/error and sync time) whenever it runs. It does not discover newly created Walmart listings or rebuild mappings; a complete `walmart:catalog:import` remains a developer/administrator maintenance task and should run before reviewing new catalog items.
+
+Return exemptions were rejected and no longer control inventory synchronization. Their statuses remain visible only as historical reference. Exemption request download/upload controls are intentionally removed from the normal client workflow.
+
+Bulk zero-all, sync execution and the complete catalog import remain CLI-only while the catalog is being reconciled. This prevents accidental Walmart changes and avoids browser/Cloudflare timeouts.
 
 ### Developer CLI workflow
 
@@ -63,31 +90,7 @@ php bin/magento walmart:catalog:import
 php bin/magento walmart:catalog:reconcile
 ```
 
-Export a Walmart-format request CSV and a separate internal review CSV:
-
-```bash
-php bin/magento walmart:exemption:export --scope=all
-```
-
-The files are written to `var/export` by default as `walmart-return-exemption-all-skus.csv` or `walmart-return-exemption-new-requests-only.csv`, with a matching `-review.csv`. The request CSV uses Walmart's eight-column template. The review CSV includes mapping, publication, exemption, and missing-URL information. Do not submit the request CSV until every missing Product URL is filled and validated.
-
-To identify SKUs from an older request, first convert the old workbook to CSV and preview it using a default status:
-
-```bash
-php bin/magento walmart:exemption:import --file=/absolute/path/previous-request.csv --default-status=previously_requested
-php bin/magento walmart:exemption:import --file=/absolute/path/previous-request.csv --default-status=previously_requested --execute --confirm="IMPORT-EXEMPTIONS"
-```
-
-The first command is a dry run. The second changes only local Magento exemption controls and does not call Walmart. After Walmart returns its decision CSV, run the same command without `--default-status`; the file must contain `SKU` and `Status` columns. Supported statuses are `unknown`, `previously_requested`, `pending`, `approved`, and `rejected`.
-
-The import validates the entire file first. If any row is invalid, no status is updated.
-
-After the client submits the final request CSV, mark those same rows Pending with a dry run first:
-
-```bash
-php bin/magento walmart:exemption:import --file=var/export/walmart-return-exemption-new-requests-only.csv --default-status=pending
-php bin/magento walmart:exemption:import --file=var/export/walmart-return-exemption-new-requests-only.csv --default-status=pending --execute --confirm="IMPORT-EXEMPTIONS"
-```
+Historical exemption export/import CLI commands remain in the code for audit or recovery purposes, but they are not part of the current inventory rollout.
 
 ## Safe one-product test
 
@@ -95,7 +98,7 @@ php bin/magento walmart:exemption:import --file=var/export/walmart-return-exempt
 php bin/magento walmart:connection:test
 php bin/magento walmart:catalog:diagnose
 php bin/magento walmart:catalog:import --limit=10
-php bin/magento walmart:sku:configure --sku=SD0205J --mapping-verified=yes --exemption=approved
+php bin/magento walmart:sku:configure --sku=SD0205J --mapping-verified=yes
 php bin/magento walmart:inventory:backup --sku=TEST-SKU
 php bin/magento walmart:inventory:preview --sku=TEST-SKU
 php bin/magento walmart:inventory:zero --sku=TEST-SKU

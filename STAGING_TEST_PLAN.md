@@ -8,7 +8,7 @@
 - Confirm the default ship node.
 - Confirm the existing order service does not write Walmart inventory.
 - Obtain Walmart API credentials with Items, Inventory, Feeds, and Pricing permissions. Do not grant Orders permissions.
-- Select one non-critical, seller-fulfilled SKU with confirmed return-exemption approval.
+- Select non-critical seller-fulfilled SKUs covering one non-meltable product, one meltable product, and one verified custom-option mapping.
 
 ## Installation validation
 
@@ -30,35 +30,44 @@ Keep both **Allow Walmart Write Operations** and **Enable Inventory Cron** set t
 php bin/magento walmart:connection:test
 php bin/magento walmart:catalog:import
 php bin/magento walmart:catalog:reconcile
-php bin/magento walmart:exemption:export --scope=all
 php bin/magento walmart:inventory:backup --sku=TEST-SKU
 php bin/magento walmart:inventory:preview --sku=TEST-SKU
+php bin/magento walmart:inventory:preview --sku=TEST-MELTABLE-SKU --date=2026-07-15
+php bin/magento walmart:inventory:preview --sku=TEST-MELTABLE-SKU --date=2027-01-15
 php bin/magento walmart:inventory:zero --sku=TEST-SKU
 php bin/magento walmart:inventory:sync --sku=TEST-SKU
 ```
 
 Verify the Admin **Walmart Sync > Known Walmart SKUs** grid. Confirm the Walmart SKU, Item ID, Magento match, last known quantity, eligibility, and reason.
 
-Open **Walmart Sync > Dashboard & Exemptions** and verify:
+Open **Walmart Sync > Inventory Dashboard** and verify:
 
 - Module/write/cron safety indicators are correct.
 - Unique, matched, unmatched, and unverified counts match the CLI reconciliation report.
-- Catalog refresh completes without a Walmart write.
-- All three CSV download buttons work.
-- CSV preview reports a valid row count without changing statuses.
-- Applying a test CSV updates only the selected local statuses.
-- The grid Approved mass action requires confirmation.
+- The dashboard does not expose long-running catalog refresh or obsolete exemption request controls.
+- Return-exemption totals are labelled historical/reference only.
+- Every grid column has a plain-language explanation.
 
-Review both exemption CSV files. The Walmart request file is not submission-ready until every missing Product URL has been supplied and checked. Mark older request SKUs with the dry-run-first exemption importer before generating the final `--scope=new` request file.
+For a Magento custom-option SKU, verify that the grid shows the parent Magento SKU, mapping type `custom_option`, and the correct option title. Select the row and run **Verify Selected Custom-Option Mappings**. Then select the mapped direct and option rows and run **Enable Sync for Selected Magento Products**. Both actions must confirm that no Walmart API data changed.
 
-For a Magento custom-option SKU, verify that the grid shows the parent Magento SKU, mapping type `custom_option`, and the correct option title. Only after the mapping and exemption are confirmed, configure the local controls and preview:
+Run a normal preview to refresh the grid:
 
 ```bash
-php bin/magento walmart:sku:configure --sku=TEST-OPTION-SKU --mapping-verified=yes --exemption=approved
 php bin/magento walmart:inventory:preview --sku=TEST-OPTION-SKU
 ```
 
-This configuration command updates only local Magento mapping controls. It does not call Walmart.
+Confirm Mapping Verified = Yes, Sync Enabled = Yes and that SEND/SKIP, meltable state and calculated quantity are correct. Select the same row and test **Disable Sync for Selected Magento Products**; after a new preview it must show SKIP. Re-enable it for further tests. Direct product mappings do not require mapping verification.
+
+## Cron canary
+
+Keep every product disabled except the approved staging canaries. Set **Allow Walmart Write Operations = Yes**, **Enable Inventory Cron = Yes**, and temporarily set the expression to `* * * * *`. Run Magento cron twice at least one minute apart:
+
+```bash
+php bin/magento cron:run --group=default
+php bin/magento cron:run --group=default
+```
+
+Verify `sandy_walmartsync_inventory` in `cron_schedule`, then check the grid Last Result, Last Error and Last Sync Time. After the test, immediately set cron and write operations back to No. The inventory cron refreshes calculated grid state, but new Walmart catalog records still require the read-only catalog import maintenance command.
 
 ## One-product write canary
 
@@ -70,7 +79,6 @@ Obtain written client approval. Enable **Allow Walmart Write Operations**, but l
 4. Wait long enough to prove the existing service does not restore inventory.
 5. Set the Magento product fields:
    - Enable Walmart Sync = Yes
-   - Return Exemption Status = Approved
    - Force Walmart Inventory to Zero = No
 6. Preview restoration.
 7. Execute restoration.
@@ -86,13 +94,13 @@ php bin/magento walmart:inventory:sync --sku=TEST-SKU --execute --confirm="SYNC:
 
 For the canary SKU, test each condition separately and use preview before executing:
 
-- Exemption status Pending produces quantity zero.
-- Enable Walmart Sync No produces quantity zero.
+- Exemption history does not change eligibility or calculated quantity.
+- Enable Walmart Sync No produces SKIP and sends no Walmart request.
 - Magento product Disabled produces quantity zero.
 - Force Walmart Inventory to Zero Yes produces quantity zero.
 - Magento out of stock produces quantity zero.
 - Quantity less than or equal to the configured buffer produces quantity zero.
-- Incorrect Walmart SKU mapping produces quantity zero.
+- Unmatched, ambiguous and unverified custom-option mappings produce SKIP and send no Walmart request.
 
 ## Zero-all gate
 

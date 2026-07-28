@@ -30,23 +30,38 @@
         <columnsControls name="columns_controls"/>
         <filters name="listing_filters"/>
         <massaction name="listing_massaction">
-            <action name="exemption_unknown">
-                <settings><type>exemption_unknown</type><label translate="true">Set Exemption: Unknown</label><url path="sandy_walmartsync/sku/massExemption/status/unknown"/></settings>
-            </action>
-            <action name="exemption_previous">
-                <settings><type>exemption_previous</type><label translate="true">Set Exemption: Previously Requested</label><url path="sandy_walmartsync/sku/massExemption/status/previously_requested"/></settings>
-            </action>
-            <action name="exemption_pending">
-                <settings><type>exemption_pending</type><label translate="true">Set Exemption: Pending Review</label><url path="sandy_walmartsync/sku/massExemption/status/pending"/></settings>
-            </action>
-            <action name="exemption_approved">
+            <action name="verify_mapping">
                 <settings>
-                    <type>exemption_approved</type><label translate="true">Set Exemption: Approved</label><url path="sandy_walmartsync/sku/massExemption/status/approved"/>
-                    <confirm><message translate="true">Only use Approved when Walmart has confirmed these SKUs. Continue?</message></confirm>
+                    <type>verify_mapping</type>
+                    <label translate="true">Verify Selected Custom-Option Mappings</label>
+                    <url path="sandy_walmartsync/sku/massVerifyMapping"/>
+                    <confirm>
+                        <title translate="true">Verify selected mappings?</title>
+                        <message translate="true">Confirm that each selected Walmart custom-option SKU points to the correct Magento parent and option. This changes local controls only and does not contact Walmart.</message>
+                    </confirm>
                 </settings>
             </action>
-            <action name="exemption_rejected">
-                <settings><type>exemption_rejected</type><label translate="true">Set Exemption: Rejected</label><url path="sandy_walmartsync/sku/massExemption/status/rejected"/></settings>
+            <action name="enable_product_sync">
+                <settings>
+                    <type>enable_product_sync</type>
+                    <label translate="true">Enable Sync for Selected Magento Products</label>
+                    <url path="sandy_walmartsync/sku/massProductSync/enabled/1"/>
+                    <confirm>
+                        <title translate="true">Enable selected products?</title>
+                        <message translate="true">This enables the unique mapped Magento parent products. It does not send inventory until global writes and an execution process are enabled.</message>
+                    </confirm>
+                </settings>
+            </action>
+            <action name="disable_product_sync">
+                <settings>
+                    <type>disable_product_sync</type>
+                    <label translate="true">Disable Sync for Selected Magento Products</label>
+                    <url path="sandy_walmartsync/sku/massProductSync/enabled/0"/>
+                    <confirm>
+                        <title translate="true">Disable selected products?</title>
+                        <message translate="true">Selected mapped parent products will be skipped by future synchronization. This action does not send zero or contact Walmart.</message>
+                    </confirm>
+                </settings>
             </action>
         </massaction>
         <paging name="listing_paging"/>
@@ -54,31 +69,92 @@
     <columns name="walmart_sku_columns">
         <selectionsColumn name="ids"><settings><indexField>entity_id</indexField></settings></selectionsColumn>
         <column name="walmart_sku"><settings><filter>text</filter><label translate="true">Walmart SKU</label></settings></column>
-        <column name="item_id"><settings><filter>text</filter><label translate="true">Item ID</label></settings></column>
+        <column name="item_id"><settings><filter>text</filter><visible>false</visible><label translate="true">Item ID</label></settings></column>
         <column name="product_name"><settings><filter>text</filter><label translate="true">Walmart Product</label></settings></column>
-        <column name="current_qty"><settings><filter>textRange</filter><label translate="true">Last Known Qty</label></settings></column>
-        <column name="magento_sku"><settings><filter>text</filter><label translate="true">Magento SKU</label></settings></column>
-        <column name="mapping_type"><settings><filter>text</filter><label translate="true">Mapping Type</label></settings></column>
+        <column name="current_qty">
+            <argument name="data" xsi:type="array"><item name="config" xsi:type="array"><item name="fieldClass" xsi:type="array"><item name="walmart-cell-control" xsi:type="boolean">true</item></item></item></argument>
+            <settings><filter>textRange</filter><label translate="true">Last Known Qty</label></settings>
+        </column>
+        <column name="magento_sku">
+            <argument name="data" xsi:type="array"><item name="config" xsi:type="array"><item name="fieldClass" xsi:type="array"><item name="walmart-cell-control" xsi:type="boolean">true</item></item></item></argument>
+            <settings><filter>text</filter><label translate="true">Magento SKU</label></settings>
+        </column>
+        <column name="mapping_type">
+            <argument name="data" xsi:type="array"><item name="config" xsi:type="array"><item name="fieldClass" xsi:type="array"><item name="walmart-cell-mapping" xsi:type="boolean">true</item></item></item></argument>
+            <settings><filter>text</filter><label translate="true">Mapping Type</label></settings>
+        </column>
         <column name="option_title"><settings><filter>text</filter><label translate="true">Magento Option</label></settings></column>
         <column name="mapping_verified" component="Magento_Ui/js/grid/columns/select">
+            <argument name="data" xsi:type="array"><item name="config" xsi:type="array"><item name="fieldClass" xsi:type="array"><item name="walmart-cell-mapping" xsi:type="boolean">true</item></item></item></argument>
             <settings>
                 <options class="Magento\Config\Model\Config\Source\Yesno"/>
                 <filter>select</filter><dataType>select</dataType><label translate="true">Mapping Verified</label>
             </settings>
         </column>
-        <column name="sku_exemption_status"><settings><filter>text</filter><label translate="true">SKU Exemption</label></settings></column>
-        <column name="is_eligible" component="Magento_Ui/js/grid/columns/select">
+        <column name="sync_enabled" component="Magento_Ui/js/grid/columns/select">
+            <argument name="data" xsi:type="array"><item name="config" xsi:type="array"><item name="fieldClass" xsi:type="array"><item name="walmart-cell-control" xsi:type="boolean">true</item></item></item></argument>
             <settings>
                 <options class="Magento\Config\Model\Config\Source\Yesno"/>
-                <filter>select</filter><dataType>select</dataType><label translate="true">Eligible</label>
+                <filter>select</filter><dataType>select</dataType><label translate="true">Sync Enabled</label>
             </settings>
         </column>
-        <column name="eligibility_reason"><settings><filter>text</filter><label translate="true">Eligibility Reason</label></settings></column>
-        <column name="published_status"><settings><filter>text</filter><label translate="true">Published Status</label></settings></column>
-        <column name="last_sync_status"><settings><filter>text</filter><label translate="true">Last Result</label></settings></column>
-        <column name="last_error"><settings><filter>text</filter><label translate="true">Last Error</label></settings></column>
+        <column name="magento_qty_live">
+            <argument name="data" xsi:type="array"><item name="config" xsi:type="array"><item name="fieldClass" xsi:type="array"><item name="walmart-cell-control" xsi:type="boolean">true</item></item></item></argument>
+            <settings><filter>textRange</filter><label translate="true">Magento Qty</label></settings>
+        </column>
+        <column name="is_meltable" component="Magento_Ui/js/grid/columns/select">
+            <argument name="data" xsi:type="array"><item name="config" xsi:type="array"><item name="fieldClass" xsi:type="array"><item name="walmart-cell-control" xsi:type="boolean">true</item></item></item></argument>
+            <settings>
+                <options class="Magento\Config\Model\Config\Source\Yesno"/>
+                <filter>select</filter><dataType>select</dataType><label translate="true">Meltable</label>
+            </settings>
+        </column>
+        <column name="seasonal_status">
+            <argument name="data" xsi:type="array"><item name="config" xsi:type="array"><item name="fieldClass" xsi:type="array"><item name="walmart-cell-control" xsi:type="boolean">true</item></item></item></argument>
+            <settings><filter>text</filter><label translate="true">Seasonal Status</label></settings>
+        </column>
+        <column name="calculated_qty">
+            <argument name="data" xsi:type="array"><item name="config" xsi:type="array"><item name="fieldClass" xsi:type="array"><item name="walmart-cell-control" xsi:type="boolean">true</item></item></item></argument>
+            <settings><filter>textRange</filter><label translate="true">Calculated Walmart Qty</label></settings>
+        </column>
+        <column name="sync_action">
+            <argument name="data" xsi:type="array"><item name="config" xsi:type="array"><item name="fieldClass" xsi:type="array"><item name="walmart-cell-control" xsi:type="boolean">true</item></item></item></argument>
+            <settings><filter>text</filter><label translate="true">Sync Action</label></settings>
+        </column>
+        <column name="is_eligible" component="Magento_Ui/js/grid/columns/select">
+            <argument name="data" xsi:type="array"><item name="config" xsi:type="array"><item name="fieldClass" xsi:type="array"><item name="walmart-cell-mapping" xsi:type="boolean">true</item></item></item></argument>
+            <settings>
+                <options class="Magento\Config\Model\Config\Source\Yesno"/>
+                <filter>select</filter><dataType>select</dataType><label translate="true">Ready to Sync</label>
+            </settings>
+        </column>
+        <column name="eligibility_reason">
+            <argument name="data" xsi:type="array"><item name="config" xsi:type="array"><item name="fieldClass" xsi:type="array"><item name="walmart-cell-mapping" xsi:type="boolean">true</item></item></item></argument>
+            <settings><filter>text</filter><label translate="true">Eligibility Reason</label></settings>
+        </column>
+        <column name="sku_exemption_status">
+            <argument name="data" xsi:type="array"><item name="config" xsi:type="array"><item name="fieldClass" xsi:type="array"><item name="walmart-cell-reference" xsi:type="boolean">true</item></item></item></argument>
+            <settings><filter>text</filter><visible>false</visible><label translate="true">Exemption History</label></settings>
+        </column>
+        <column name="published_status">
+            <argument name="data" xsi:type="array"><item name="config" xsi:type="array"><item name="fieldClass" xsi:type="array"><item name="walmart-cell-mapping" xsi:type="boolean">true</item></item></item></argument>
+            <settings><filter>text</filter><visible>false</visible><label translate="true">Published Status</label></settings>
+        </column>
+        <column name="last_sync_status">
+            <argument name="data" xsi:type="array"><item name="config" xsi:type="array"><item name="fieldClass" xsi:type="array"><item name="walmart-cell-result" xsi:type="boolean">true</item></item></item></argument>
+            <settings><filter>text</filter><label translate="true">Last Result</label></settings>
+        </column>
+        <column name="last_error">
+            <argument name="data" xsi:type="array"><item name="config" xsi:type="array"><item name="fieldClass" xsi:type="array"><item name="walmart-cell-result" xsi:type="boolean">true</item></item></item></argument>
+            <settings><filter>text</filter><label translate="true">Last Error</label></settings>
+        </column>
+        <column name="last_synced_at" class="Magento\Ui\Component\Listing\Columns\Date">
+            <argument name="data" xsi:type="array"><item name="config" xsi:type="array"><item name="fieldClass" xsi:type="array"><item name="walmart-cell-control" xsi:type="boolean">true</item></item></item></argument>
+            <settings><filter>dateRange</filter><dataType>date</dataType><label translate="true">Last Sync Time</label></settings>
+        </column>
         <column name="updated_at" class="Magento\Ui\Component\Listing\Columns\Date">
-            <settings><filter>dateRange</filter><dataType>date</dataType><label translate="true">Updated</label></settings>
+            <argument name="data" xsi:type="array"><item name="config" xsi:type="array"><item name="fieldClass" xsi:type="array"><item name="walmart-cell-reference" xsi:type="boolean">true</item></item></item></argument>
+            <settings><filter>dateRange</filter><dataType>date</dataType><visible>false</visible><label translate="true">Updated</label></settings>
         </column>
     </columns>
 </listing>

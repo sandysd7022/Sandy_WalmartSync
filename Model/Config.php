@@ -80,6 +80,58 @@ class Config
         return max(0, (float)$this->scopeConfig->getValue(self::XML_PATH . 'general/inventory_buffer'));
     }
 
+    public function isMeltableRestrictionEnabled()
+    {
+        return $this->scopeConfig->isSetFlag(self::XML_PATH . 'seasonal/enabled');
+    }
+
+    public function getMeltableCategoryIds()
+    {
+        $value = (string)$this->scopeConfig->getValue(self::XML_PATH . 'seasonal/category_ids');
+        $ids = array_filter(array_map('intval', explode(',', $value)));
+        return array_values(array_unique($ids));
+    }
+
+    public function getMeltableZeroStart()
+    {
+        return $this->normalizeMonthDay(
+            $this->scopeConfig->getValue(self::XML_PATH . 'seasonal/zero_start'),
+            '05-01'
+        );
+    }
+
+    public function getMeltableZeroEnd()
+    {
+        return $this->normalizeMonthDay(
+            $this->scopeConfig->getValue(self::XML_PATH . 'seasonal/zero_end'),
+            '11-30'
+        );
+    }
+
+    public function getSeasonalTimezone()
+    {
+        $value = trim((string)$this->scopeConfig->getValue(self::XML_PATH . 'seasonal/timezone'));
+        if ($value === '') {
+            return 'America/New_York';
+        }
+        try {
+            new \DateTimeZone($value);
+            return $value;
+        } catch (\Exception $exception) {
+            return 'America/New_York';
+        }
+    }
+
+    private function normalizeMonthDay($value, $default)
+    {
+        $value = trim((string)$value);
+        if (!preg_match('/^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/', $value)) {
+            return $default;
+        }
+        list($month, $day) = array_map('intval', explode('-', $value));
+        return checkdate($month, $day, 2000) ? $value : $default;
+    }
+
     private function decryptValue($value)
     {
         $value = (string)$value;

@@ -1,5 +1,56 @@
 # Stage 1 release notes
 
+## 1.4.6
+
+- Added color-coded attention columns and a legend to the Known Walmart SKUs grid.
+- Highlighted live-write/cron safety gates, unmatched and unverified counts, SEND/SKIP totals, seasonal-zero totals, sync errors and latest actual sync time on the dashboard.
+- Documented that inventory cron refreshes operational grid state while complete catalog discovery remains a separate read-only maintenance import.
+- Added a controlled staging cron-canary procedure.
+
+## 1.4.5
+
+- Made the Known Walmart SKUs grid the single Admin control for product sync enablement.
+- Hid the duplicate product-edit toggle after confirming Magento 2.3 could render No while the stored global value, grid and inventory engine all correctly read Yes.
+- Direct and custom-option Walmart rows continue to share the same parent-product value.
+
+## 1.4.4
+
+- Added Magento's standard Boolean source model to Enable Walmart Sync and Force Walmart Inventory to Zero.
+- Fixed the Magento 2.3 product form displaying No while the stored global integer value and inventory engine correctly read Yes.
+
+## 1.4.3
+
+- Normalized all Walmart product-control attributes to Global scope.
+- Fixed the product edit form showing a store-view `No` value while inventory preview correctly used the enabled Default-scope value.
+- Grid bulk actions continue to update the one global parent-product setting inherited by custom-option Walmart SKUs.
+
+## 1.4.2
+
+- Fixed Magento 2.3 Admin mass actions generating an empty SQL identifier (`WHERE (`` IN (...))`) by explicitly declaring `entity_id` as the Walmart SKU collection ID field.
+- The fix applies to mapping verification and product sync enable/disable actions.
+
+## 1.4.1
+
+- Added guarded grid actions to verify selected custom-option mappings and enable or disable synchronization for selected mapped Magento products.
+- Parent products are deduplicated when multiple Walmart option rows are selected.
+- All grid actions update Magento controls only and never call the Walmart API.
+- Added an Admin workflow guide and plain-language explanations for operational grid columns.
+- Added comments explaining every connection, safety and scheduling configuration field.
+- Removed active return-exemption download/import controls and exemption mass actions from the client workflow; history remains read-only.
+- Removed the long-running browser catalog-refresh button to prevent Cloudflare 524 timeouts; complete imports remain a server maintenance command.
+
+## 1.4.0
+
+- Return-exemption status remains available as historical information but no longer controls inventory synchronization.
+- Added Magento-category-driven meltable detection, including products assigned to child categories.
+- Added a product-level Meltable Product Override with Automatic, Yes and No values.
+- Custom-option Walmart SKUs inherit meltable status and inventory from their mapped Magento parent product.
+- Added configurable seasonal zero dates and timezone; defaults are May 1 through November 30 in America/New_York.
+- Added a safe `--date=YYYY-MM-DD` inventory preview option for seasonal testing without changing the server clock or persisting simulated results.
+- Added Sync Enabled, Magento Qty, Meltable, Seasonal Status, Calculated Walmart Qty and Last Sync Time to the SKU grid.
+- Added last-preview counts for ready, meltable and seasonally-zero Walmart SKUs to the dashboard.
+- Bulk sync now skips sync-disabled, unmatched, ambiguous and unverified SKUs instead of sending zero. Intentional zero states remain sendable.
+
 ## 1.3.3
 
 - Preserve per-Walmart-SKU exemption history across every Magento mapping change.
@@ -107,3 +158,44 @@ This package implements the safety-critical catalog and inventory foundation req
 - No order, shipment, tracking, cancellation, return, or product-deletion functionality.
 
 Product-content feeds and price synchronization are intentionally not enabled in this stage. They require the client's confirmed price rule, fulfillment model, product types, and Magento-to-Walmart attribute mappings derived from current Walmart item specs. Adding them before those inputs are known could submit incorrect product data.
+
+## 1.4.7
+
+- Shortened the inventory cron lock identifier to remain within MySQL's 64-character lock-name limit when Magento adds a long database prefix.
+- Protected lock acquisition and conditional release so a lock-provider failure cannot attempt to release a lock that was never acquired.
+
+## 1.4.8
+
+- Moved Walmart inventory automation out of Magento's shared `default` cron group into the dedicated, short `wm_sync` group.
+- Configured the group to execute in the current process so shared-group locks or separate-process spawning cannot leave Walmart jobs permanently pending.
+- Kept the schedule-ahead window small for clear staging diagnostics and isolated execution.
+
+## 1.4.9
+
+- Added an explicit inventory cron completion summary with evaluated, sent and skipped counts.
+- Made item-level synchronization errors fail the Magento cron schedule instead of being silently recorded as a successful cron run.
+- Logged a clear warning when the module, global write gate or inventory cron gate prevents execution.
+
+## 1.5.0
+
+- Removed the redundant inventory-job database lock because Magento already holds the dedicated `wm_sync` cron-group lock.
+- Fixed `Current connection is already holding lock ... only single lock allowed` on MySQL installations that allow one named lock per connection.
+- Overlap protection remains enforced by Magento's dedicated cron-group processing lock.
+
+## 1.5.1
+
+- Applied explicit Magento UI `fieldClass` values to high-attention SKU grid cells for reliable Magento 2.3 rendering.
+- Yellow identifies mapping and eligibility review; blue identifies quantities and sync decisions; red identifies results and errors; gray identifies historical reference data.
+- Strengthened the cell colors and added a colored left edge so important operational columns remain visible in alternating grid rows.
+
+## 1.5.2
+
+- Added a Magento 2.3-safe grid attention initializer that maps visible header labels to colored header and body cells after every grid redraw.
+- Preserved attention colors after filtering, pagination, AJAX refreshes and column reordering.
+- Removed the unnecessary product-edit-toggle explanation from the SKU grid guide.
+
+## 1.5.3
+
+- Read Magento stock before mapping and sync-enable eligibility gates so disabled or unverified rows still show their real Magento quantity.
+- Added a stock-item-save observer that immediately refreshes Magento Qty for every local Walmart row mapped to the edited parent product.
+- Marked calculated quantity and sync action as awaiting recalculation after a stock edit; the next preview or cron run safely recomputes the Walmart action.

@@ -41,7 +41,9 @@ class InventorySyncCommand extends Command
         }
         $result = $this->operator->sync($sku, $input->getOption('limit'), $execute);
         foreach ($result['results'] as $row) {
-            $quantity = $execute ? (isset($row['sent_quantity']) ? $row['sent_quantity'] : 'ERROR') : $row['quantity'];
+            $quantity = $execute
+                ? ($row['status'] === 'skipped' ? '-' : (isset($row['sent_quantity']) ? $row['sent_quantity'] : 'ERROR'))
+                : $row['quantity'];
             $status = $execute ? $row['status'] : 'dry_run';
             $output->writeln(sprintf('%s: qty=%s eligible=%s [%s] %s', $row['walmart_sku'], $quantity, $row['eligible'] ? 'yes' : 'no', $status, $row['reason']));
         }

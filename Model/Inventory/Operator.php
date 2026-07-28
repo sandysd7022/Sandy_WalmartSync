@@ -36,16 +36,24 @@ class Operator
         $this->productAction = $productAction;
     }
 
-    public function preview($sku = null, $limit = null)
+    public function preview($sku = null, $limit = null, $asOf = null)
     {
         $results = [];
         foreach ($this->storage->getAll($sku, $limit) as $record) {
-            $decision = $this->eligibility->evaluate($record);
-            $this->storage->updateStatus($record['walmart_sku'], [
-                'is_eligible' => $decision['eligible'] ? 1 : 0,
-                'eligibility_reason' => $decision['reason'],
-                'magento_sku' => $decision['magento_sku']
-            ]);
+            $decision = $this->eligibility->evaluate($record, $asOf);
+            if ($asOf === null || $asOf === '') {
+                $this->storage->updateStatus($record['walmart_sku'], [
+                    'is_eligible' => $decision['eligible'] ? 1 : 0,
+                    'eligibility_reason' => $decision['reason'],
+                    'magento_sku' => $decision['magento_sku'],
+                    'sync_enabled' => $decision['sync_enabled'] ? 1 : 0,
+                    'is_meltable' => $decision['is_meltable'] ? 1 : 0,
+                    'seasonal_status' => $decision['seasonal_status'],
+                    'magento_qty' => $decision['magento_qty'],
+                    'calculated_qty' => $decision['quantity'],
+                    'sync_action' => $decision['sync_action']
+                ]);
+            }
             $results[] = array_merge($decision, [
                 'walmart_sku' => $record['walmart_sku'],
                 'current_qty' => $record['current_qty'],
@@ -117,7 +125,13 @@ class Operator
         $results = [];
         $errors = 0;
         foreach ($preview as $decision) {
-            $quantity = $decision['eligible'] ? $decision['quantity'] : 0;
+            if ($decision['sync_action'] !== 'send') {
+                $decision['sent_quantity'] = null;
+                $decision['status'] = 'skipped';
+                $results[] = $decision;
+                continue;
+            }
+            $quantity = $decision['quantity'];
             try {
                 $this->client->updateInventory($decision['walmart_sku'], $quantity, $this->config->getShipNode());
                 $this->storage->updateStatus($decision['walmart_sku'], [

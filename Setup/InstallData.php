@@ -23,25 +23,38 @@ class InstallData implements InstallDataInterface
         $attributes = [
             'walmart_sync_enabled' => [
                 'type' => 'int', 'label' => 'Enable Walmart Sync', 'input' => 'boolean',
-                'default' => 0, 'required' => false, 'sort_order' => 10
+                'source' => 'Magento\\Eav\\Model\\Entity\\Attribute\\Source\\Boolean',
+                'default' => 0, 'required' => false, 'sort_order' => 10, 'visible' => false,
+                'note' => 'Product-level opt-in. Custom-option Walmart SKUs inherit this setting from their Magento parent. Enabling it does not immediately contact Walmart.'
             ],
             'walmart_exemption_status' => [
                 'type' => 'varchar', 'label' => 'Walmart Return Exemption Status', 'input' => 'select',
                 'source' => 'Sandy\\WalmartSync\\Model\\Product\\Attribute\\Source\\ExemptionStatus',
                 'default' => 'unknown', 'required' => false, 'sort_order' => 20,
-                'note' => 'Product-level status for a direct Walmart SKU match. Custom-option SKUs can have separate statuses; review those under Walmart Sync > Known Walmart SKUs. Unknown = not recorded; Previously Requested = historical request, not approval; Pending Review = submitted; Approved = Walmart confirmed; Rejected = Walmart declined.'
+                'visible' => false,
+                'note' => 'Historical tracking only; this status does not control inventory synchronization.'
             ],
             'walmart_sku' => [
                 'type' => 'varchar', 'label' => 'Walmart SKU', 'input' => 'text',
-                'required' => false, 'sort_order' => 30, 'note' => 'Leave empty when Walmart SKU equals Magento SKU.'
+                'required' => false, 'sort_order' => 30,
+                'note' => 'Optional direct-product override. Leave empty when Walmart SKU equals Magento SKU. Custom-option SKUs are reviewed in Walmart Sync > Known Walmart SKUs.'
             ],
             'walmart_item_id' => [
                 'type' => 'varchar', 'label' => 'Walmart Item ID', 'input' => 'text',
-                'required' => false, 'sort_order' => 40
+                'required' => false, 'sort_order' => 40,
+                'note' => 'Reference identifier imported from Walmart. Do not edit unless the product is being manually remapped.'
             ],
             'walmart_force_zero' => [
                 'type' => 'int', 'label' => 'Force Walmart Inventory to Zero', 'input' => 'boolean',
-                'default' => 0, 'required' => false, 'sort_order' => 50
+                'source' => 'Magento\\Eav\\Model\\Entity\\Attribute\\Source\\Boolean',
+                'default' => 0, 'required' => false, 'sort_order' => 50,
+                'note' => 'Emergency product-level override. A ready SKU calculates zero until this is changed back to No.'
+            ],
+            'walmart_meltable_override' => [
+                'type' => 'varchar', 'label' => 'Meltable Product Override', 'input' => 'select',
+                'source' => 'Sandy\\WalmartSync\\Model\\Product\\Attribute\\Source\\MeltableOverride',
+                'default' => 'auto', 'required' => false, 'sort_order' => 55,
+                'note' => 'Automatic uses the configured Magento meltable categories. Yes or No overrides category detection for this product. Custom-option Walmart SKUs inherit this parent-product result.'
             ],
             'walmart_last_sync_at' => [
                 'type' => 'datetime', 'label' => 'Walmart Last Sync Date', 'input' => 'date',

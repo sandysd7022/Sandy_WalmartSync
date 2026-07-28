@@ -1,0 +1,61 @@
+<?php
+$escape = function ($value) use ($block) {
+    return $block->escapeHtml($value);
+};
+?>
+<div class="admin__fieldset-wrapper">
+    <div class="admin__fieldset-wrapper-title">
+        <strong class="title"><?= $escape(__('How to use this grid')) ?></strong>
+    </div>
+    <div class="admin__fieldset-wrapper-content">
+        <p>
+            <?= $escape(__('All Actions-menu controls on this page update Magento only. They never send inventory to Walmart. Actual Walmart writes still require the global write setting and an inventory execution or cron run.')) ?>
+        </p>
+        <ol>
+            <li><?= $escape(__('For custom_option rows, compare the Walmart SKU, Magento parent SKU, and Magento Option. Select only correct rows, then choose Verify Selected Custom-Option Mappings.')) ?></li>
+            <li><?= $escape(__('Select mapped rows and choose Enable Sync for Selected Magento Products. Multiple option rows for the same parent are safely updated once.')) ?></li>
+            <li><?= $escape(__('Run inventory preview to calculate current quantities and actions. Review every SEND row before enabling global Walmart writes.')) ?></li>
+        </ol>
+        <p class="note">
+            <?= $escape(__('Direct product_sku mappings do not require Mapping Verified. Disabled, unmatched, ambiguous, and unverified rows are SKIP and are not sent to Walmart.')) ?>
+        </p>
+        <div class="walmart-grid-legend">
+            <span class="walmart-legend-mapping"><?= $escape(__('Yellow: verify mapping or eligibility')) ?></span>
+            <span class="walmart-legend-control"><?= $escape(__('Blue: sync control and calculated action')) ?></span>
+            <span class="walmart-legend-error"><?= $escape(__('Red: review errors before live use')) ?></span>
+        </div>
+
+        <details>
+            <summary><strong><?= $escape(__('Column explanations')) ?></strong></summary>
+            <table class="admin__table-secondary">
+                <tr><th><?= $escape(__('Walmart SKU')) ?></th><td><?= $escape(__('The exact SKU that Walmart inventory updates target.')) ?></td></tr>
+                <tr><th><?= $escape(__('Item ID')) ?></th><td><?= $escape(__('Walmart listing identifier. Hidden by default; enable it from Columns when troubleshooting.')) ?></td></tr>
+                <tr><th><?= $escape(__('Walmart Product')) ?></th><td><?= $escape(__('Read-only Walmart listing title used for review; Magento does not overwrite it in Stage 1.')) ?></td></tr>
+                <tr><th><?= $escape(__('Last Known Qty')) ?></th><td><?= $escape(__('Last Walmart quantity recorded locally, not the next quantity to send.')) ?></td></tr>
+                <tr><th><?= $escape(__('Magento SKU')) ?></th><td><?= $escape(__('Matched Magento product or parent product that supplies inventory.')) ?></td></tr>
+                <tr><th><?= $escape(__('Mapping Type')) ?></th><td><?= $escape(__('product_sku = direct match; custom_option = option SKU using a parent product; unmatched/ambiguous rows are skipped.')) ?></td></tr>
+                <tr><th><?= $escape(__('Magento Option')) ?></th><td><?= $escape(__('Matched custom-option title or weight. Review this before verifying a custom-option mapping.')) ?></td></tr>
+                <tr><th><?= $escape(__('Mapping Verified')) ?></th><td><?= $escape(__('One-time safety approval for custom-option mappings. Direct product mappings do not require it.')) ?></td></tr>
+                <tr><th><?= $escape(__('Sync Enabled')) ?></th><td><?= $escape(__('Product-level opt-in. No means the row is skipped without sending zero.')) ?></td></tr>
+                <tr><th><?= $escape(__('Magento Qty')) ?></th><td><?= $escape(__('Magento stock quantity captured by the latest normal preview.')) ?></td></tr>
+                <tr><th><?= $escape(__('Meltable')) ?></th><td><?= $escape(__('Yes when the parent product matches a configured meltable category or product override.')) ?></td></tr>
+                <tr><th><?= $escape(__('Seasonal Status')) ?></th><td><?= $escape(__('zero_period forces meltable inventory to zero; selling_period uses Magento inventory.')) ?></td></tr>
+                <tr><th><?= $escape(__('Calculated Walmart Qty')) ?></th><td><?= $escape(__('Quantity that the next approved inventory execution would send.')) ?></td></tr>
+                <tr><th><?= $escape(__('Sync Action')) ?></th><td><?= $escape(__('SEND means an execution may contact Walmart; SKIP means no Walmart request will be made.')) ?></td></tr>
+                <tr><th><?= $escape(__('Ready to Sync')) ?></th><td><?= $escape(__('All local mapping and product safety checks passed. Always review the calculated quantity.')) ?></td></tr>
+                <tr><th><?= $escape(__('Eligibility Reason')) ?></th><td><?= $escape(__('Plain-language explanation for SEND or SKIP and any forced-zero result.')) ?></td></tr>
+                <tr><th><?= $escape(__('Exemption History')) ?></th><td><?= $escape(__('Read-only historical request status. It does not control inventory and is hidden by default.')) ?></td></tr>
+                <tr><th><?= $escape(__('Published Status')) ?></th><td><?= $escape(__('Read-only Walmart listing publication state. Hidden by default and not changed by inventory sync.')) ?></td></tr>
+                <tr><th><?= $escape(__('Last Result / Last Error / Last Sync Time')) ?></th><td><?= $escape(__('Outcome and time of the most recent actual inventory attempt, not a simulated-date preview.')) ?></td></tr>
+                <tr><th><?= $escape(__('Updated')) ?></th><td><?= $escape(__('Last time the local grid record was refreshed. Hidden by default.')) ?></td></tr>
+            </table>
+        </details>
+    </div>
+</div>
+<script type="text/x-magento-init">
+{
+    "*": {
+        "Sandy_WalmartSync/js/grid-attention": {}
+    }
+}
+</script>
