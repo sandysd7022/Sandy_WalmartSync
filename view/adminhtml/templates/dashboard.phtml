@@ -16,6 +16,64 @@ $escape = function ($value) use ($block) {
     </div>
 </div>
 
+<?php $safePreview = $block->getSafeBulkPreview(); ?>
+<div class="admin__fieldset-wrapper walmart-sync-dashboard walmart-safe-bulk">
+    <div class="admin__fieldset-wrapper-title">
+        <strong class="title"><?= $escape(__('Safe Bulk Sync Approval')) ?></strong>
+    </div>
+    <div class="admin__fieldset-wrapper-content">
+        <p>
+            <?= $escape(__('Use this once after the complete Walmart catalog import. It accepts only published, active, enabled Magento products with an exact direct SKU match or one unique exact custom-option SKU match. Ambiguous, unmatched, disabled and unpublished rows stay disabled for manual review.')) ?>
+        </p>
+        <p class="note">
+            <?= $escape(__('Both buttons update Magento controls only. They never send inventory or other data to Walmart. A complete inventory preview is still required before live writes or cron.')) ?>
+        </p>
+
+        <form method="post" action="<?= $block->escapeUrl($block->getUrl('sandy_walmartsync/dashboard/previewSafeBulk')) ?>">
+            <?= $block->getBlockHtml('formkey') ?>
+            <button type="submit" class="action-default">
+                <span><?= $escape(__('1. Preview Safe Bulk Sync Approval')) ?></span>
+            </button>
+        </form>
+
+        <?php if ($safePreview): ?>
+            <div class="walmart-safe-bulk-preview">
+                <h3><?= $escape(__('Current Safe Preview')) ?></h3>
+                <table class="admin__table-secondary">
+                    <tr><th><?= $escape(__('Exact direct Walmart SKU rows')) ?></th><td><strong><?= (int)$safePreview['safe_direct_rows'] ?></strong></td></tr>
+                    <tr><th><?= $escape(__('Unique exact custom-option rows')) ?></th><td><strong><?= (int)$safePreview['safe_custom_rows'] ?></strong></td></tr>
+                    <tr><th><?= $escape(__('Unique Magento products qualifying')) ?></th><td><strong><?= (int)$safePreview['safe_products'] ?></strong></td></tr>
+                    <tr><th><?= $escape(__('Custom-option rows to verify')) ?></th><td><?= (int)$safePreview['custom_rows_to_verify'] ?></td></tr>
+                    <tr><th><?= $escape(__('Magento products to enable')) ?></th><td><?= (int)$safePreview['products_to_enable'] ?></td></tr>
+                    <tr class="walmart-status-warning"><th><?= $escape(__('Published rows left for manual review')) ?></th><td><strong><?= (int)$safePreview['manual_review_rows'] ?></strong></td></tr>
+                    <tr><th><?= $escape(__('Not published/active; kept disabled')) ?></th><td><?= (int)$safePreview['not_published_active_rows'] ?></td></tr>
+                </table>
+                <?php if (!$block->isWriteEnabled() && !$block->isCronEnabled()): ?>
+                    <form method="post" action="<?= $block->escapeUrl($block->getUrl('sandy_walmartsync/dashboard/applySafeBulk')) ?>">
+                        <?= $block->getBlockHtml('formkey') ?>
+                        <label class="walmart-safe-bulk-confirm">
+                            <input type="checkbox" name="confirm_safe_bulk" value="1" />
+                            <span><?= $escape(__('I reviewed these totals. Apply only this exact safe candidate set in Magento.')) ?></span>
+                        </label>
+                        <button type="submit"
+                                class="action-default primary"
+                                onclick="return confirm('Apply the current safe candidate set in Magento? This will not contact Walmart.');">
+                            <span><?= $escape(__('2. Apply Safe Bulk Sync Approval')) ?></span>
+                        </button>
+                    </form>
+                <?php else: ?>
+                    <p class="message message-warning">
+                        <?= $escape(__('For safety, set Walmart Write Operations and Automatic Inventory Cron to No before Apply becomes available.')) ?>
+                    </p>
+                <?php endif; ?>
+                <p class="note"><?= $escape(__('This preview expires after 30 minutes and is rejected automatically if the candidate mappings change.')) ?></p>
+            </div>
+        <?php else: ?>
+            <p class="note"><?= $escape(__('Run the preview first. The Apply button appears only while a current preview is available.')) ?></p>
+        <?php endif; ?>
+    </div>
+</div>
+
 <div class="admin__fieldset-wrapper walmart-sync-dashboard">
     <div class="admin__fieldset-wrapper-title"><strong class="title"><?= $escape(__('Inventory Readiness Summary')) ?></strong></div>
     <div class="admin__fieldset-wrapper-content">

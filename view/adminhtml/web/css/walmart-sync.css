@@ -30,6 +30,27 @@
     padding: 1rem;
 }
 
+.walmart-safe-bulk form {
+    margin: 1.5rem 0;
+}
+
+.walmart-safe-bulk-preview {
+    border: 1px solid #d6a700;
+    background: #fffdf2;
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+}
+
+.walmart-safe-bulk-confirm {
+    display: block;
+    font-weight: 600;
+    margin: 1.5rem 0 1rem;
+}
+
+.walmart-safe-bulk-confirm input {
+    margin-right: .7rem;
+}
+
 .walmart-grid-legend {
     margin: 1.5rem 0;
 }
@@ -117,4 +138,28 @@
 .admin__data-grid-wrap [data-index="updated_at"],
 .admin__data-grid-wrap [data-index="sku_exemption_status"] {
     background-color: #eeeeee !important;
+}
+
+/* Row-specific mapping and synchronization decisions. */
+.admin__data-grid-wrap td.walmart-verification-ok,
+.admin__data-grid-wrap td.walmart-sync-on {
+    background-color: #dff3df !important;
+    box-shadow: inset 4px 0 #2e7d32 !important;
+    color: #1b5e20 !important;
+    font-weight: 600;
+}
+
+.admin__data-grid-wrap td.walmart-verification-review,
+.admin__data-grid-wrap td.walmart-sync-off {
+    background-color: #fde7e7 !important;
+    box-shadow: inset 4px 0 #c62828 !important;
+    color: #8e1b1b !important;
+    font-weight: 600;
+}
+
+.admin__data-grid-wrap td.walmart-verification-na {
+    background-color: #eeeeee !important;
+    box-shadow: inset 4px 0 #777777 !important;
+    color: #444444 !important;
+    font-weight: 600;
 }

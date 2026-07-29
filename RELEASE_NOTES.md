@@ -1,5 +1,34 @@
 # Stage 1 release notes
 
+## 1.6.3
+
+- Fixed the mapping and sync status colors when Magento loads the SKU grid asynchronously.
+- The attention script now waits for grid rendering and reapplies labels after filtering, paging and AJAX refreshes.
+
+## 1.6.2
+
+- The **Mapping Verified** cell now displays **Not required** for direct `product_sku` mappings.
+- Verified custom-option mappings are shown in green; unverified custom-option mappings are shown in red as **Review required**.
+- **Sync Enabled** is shown in green for Yes and red for No.
+- These visual labels do not change filtering, mapping, approval or Walmart data.
+
+## 1.6.1
+
+- Changed the Known Walmart SKUs **Published Status** filter from free text to an exact-value dropdown.
+- Selecting **Published** no longer includes rows whose status is **Unpublished**.
+
+## 1.6.0
+
+- Added a two-step Safe Bulk Sync Approval workflow to the Magento Admin dashboard.
+- Preview is read-only and accepts only published/active Walmart rows mapped to enabled Magento products.
+- Direct mappings must remain exact Walmart SKU = Magento SKU matches.
+- Custom-option mappings must remain one unique exact option-value SKU match to the same imported parent, option and value.
+- Unmatched, ambiguous, disabled, unpublished, inactive and incomplete mappings remain disabled for manual review.
+- Apply requires a confirmation checkbox, an additional browser confirmation, and a preview less than 30 minutes old.
+- Apply is blocked unless Walmart Write Operations and Automatic Inventory Cron are both disabled.
+- Apply rejects the request if the candidate fingerprint changes after preview.
+- Bulk approval updates Magento controls only; it never calls Walmart or executes inventory synchronization.
+
 ## 1.4.6
 
 - Added color-coded attention columns and a legend to the Known Walmart SKUs grid.

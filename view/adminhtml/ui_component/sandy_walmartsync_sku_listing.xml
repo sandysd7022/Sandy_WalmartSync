@@ -136,9 +136,15 @@
             <argument name="data" xsi:type="array"><item name="config" xsi:type="array"><item name="fieldClass" xsi:type="array"><item name="walmart-cell-reference" xsi:type="boolean">true</item></item></item></argument>
             <settings><filter>text</filter><visible>false</visible><label translate="true">Exemption History</label></settings>
         </column>
-        <column name="published_status">
+        <column name="published_status" component="Magento_Ui/js/grid/columns/select">
             <argument name="data" xsi:type="array"><item name="config" xsi:type="array"><item name="fieldClass" xsi:type="array"><item name="walmart-cell-mapping" xsi:type="boolean">true</item></item></item></argument>
-            <settings><filter>text</filter><visible>false</visible><label translate="true">Published Status</label></settings>
+            <settings>
+                <options class="Sandy\WalmartSync\Model\Config\Source\PublishedStatus"/>
+                <filter>select</filter>
+                <dataType>select</dataType>
+                <visible>false</visible>
+                <label translate="true">Published Status</label>
+            </settings>
         </column>
         <column name="last_sync_status">
             <argument name="data" xsi:type="array"><item name="config" xsi:type="array"><item name="fieldClass" xsi:type="array"><item name="walmart-cell-result" xsi:type="boolean">true</item></item></item></argument>
