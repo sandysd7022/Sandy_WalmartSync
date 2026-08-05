@@ -163,3 +163,42 @@
     color: #444444 !important;
     font-weight: 600;
 }
+
+.walmart-catalog-status-tabs {
+    border-bottom: 1px solid #d6d6d6;
+    display: flex;
+    flex-wrap: wrap;
+    margin: 1.5rem 0 0;
+}
+
+.walmart-catalog-status-tab {
+    border-bottom: 3px solid transparent;
+    color: #303030;
+    display: inline-flex;
+    font-size: 1.5rem;
+    gap: .4rem;
+    padding: 1.2rem 1.6rem .9rem;
+    text-decoration: none;
+}
+
+.walmart-catalog-status-tab:hover,
+.walmart-catalog-status-tab:focus,
+.walmart-catalog-status-tab.is-active {
+    border-bottom-color: #1979c3;
+    color: #1979c3;
+    text-decoration: none;
+}
+
+.walmart-catalog-status-tab.is-active {
+    font-weight: 600;
+}
+
+.walmart-catalog-status-count {
+    white-space: nowrap;
+}
+
+.walmart-catalog-status-note {
+    color: #666666;
+    font-size: 1.2rem;
+    margin: .6rem 0 1.2rem;
+}

@@ -1,0 +1,20 @@
+<?php
+$escape = function ($value) use ($block) {
+    return $block->escapeHtml($value);
+};
+$activeStatus = $block->getActiveStatus();
+?>
+<nav class="walmart-catalog-status-tabs" aria-label="<?= $escape(__('Walmart catalog publication status')) ?>">
+    <?php foreach ($block->getStatusTabs() as $tab): ?>
+        <?php $isActive = $activeStatus === $tab['key']; ?>
+        <a class="walmart-catalog-status-tab<?= $isActive ? ' is-active' : '' ?>"
+           href="<?= $block->escapeUrl($block->getStatusUrl($tab['key'])) ?>"
+           <?= $isActive ? 'aria-current="page"' : '' ?>>
+            <span><?= $escape($tab['label']) ?></span>
+            <span class="walmart-catalog-status-count">(<?= (int)$tab['count'] ?>)</span>
+        </a>
+    <?php endforeach; ?>
+</nav>
+<p class="walmart-catalog-status-note">
+    <?= $escape(__('Read-only counts from the latest successful Walmart catalog refresh. Select a status to filter the grid.')) ?>
+</p>

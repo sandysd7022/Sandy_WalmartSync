@@ -1,17 +1,9 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
-    <type name="Sandy\WalmartSync\Model\ResourceModel\WalmartSku\Grid\Collection">
-        <arguments>
-            <argument name="mainTable" xsi:type="string">sandy_walmartsync_sku</argument>
-            <argument name="resourceModel" xsi:type="string">Sandy\WalmartSync\Model\ResourceModel\WalmartSku</argument>
-        </arguments>
-    </type>
-    <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
-        <arguments>
-            <argument name="collections" xsi:type="array">
-                <item name="sandy_walmartsync_sku_listing_data_source" xsi:type="string">Sandy\WalmartSync\Model\ResourceModel\WalmartSku\Grid\Collection</item>
-            </argument>
-        </arguments>
-    </type>
+    <!--
+        UI data-source collection registrations belong in the global etc/di.xml.
+        Registering the collections array at the adminhtml area stage replaces
+        Magento's core map and can remove sales_order_grid_data_source.
+    -->
 </config>

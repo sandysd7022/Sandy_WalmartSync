@@ -1,5 +1,45 @@
 # Stage 1 release notes
 
+## 1.6.8
+
+- Fixed unchanged custom-option mappings losing verification and sync approval after Magento product imports regenerated internal option IDs.
+- Custom-option approval now remains valid when the exact Walmart option SKU still resolves uniquely to the same Magento parent product.
+- Approval is still revoked when the mapping type, Magento parent SKU, or Magento parent product changes, including ambiguous or unmatched results.
+- Existing disabled rows are not silently approved by this update; restore only current published, active and uniquely matched rows through Safe Bulk Sync Approval while Walmart writes and cron are disabled.
+- No Walmart API data is changed during catalog refresh or Safe Bulk Sync Approval.
+
+## 1.6.7
+
+- Added a guarded `published-unmatched` inventory-zero scope for published Walmart SKUs that have no Magento product mapping.
+- Excluded ambiguous and unverified custom-option mappings from automatic orphan zeroing.
+- Added a candidate-set hash which must match the reviewed complete dry run before execution.
+- Ensured the zero operation backs up and writes the exact same frozen in-memory candidate set without re-querying between those steps.
+- Added previous Walmart quantities and the candidate hash to backup/write audit output.
+- Existing matched-product inventory synchronization, catalog content, pricing, orders and tracking behavior are unchanged.
+
+## 1.6.6
+
+- Fixed the Magento Admin Orders grid error `Not registered handle sales_order_grid_data_source`.
+- Moved the Walmart UI collection registration from area-specific Admin DI to global DI so it merges safely with Magento's core Sales and other grid data sources.
+- No Walmart catalog, mapping, inventory, pricing, order, or tracking behavior changed.
+
+## 1.6.5
+
+- Added read-only All, Unpublished, Errors, Drafts and Published counters above the Known Walmart SKUs grid.
+- Each counter is a grid shortcut that applies the exact Walmart publication-status filter.
+- Counts use the latest successfully imported local Walmart catalog and never contact or change Walmart.
+
+## 1.6.4
+
+- Fixed complete Walmart catalog imports to use `nextCursor` pagination instead of offset pagination.
+- Fetches and validates the entire Walmart cursor snapshot before changing Magento catalog rows.
+- Rejects incomplete, repeated-page, inconsistent-total, or malformed catalog responses without changing Magento catalog data.
+- Uses Walmart's supported 1,000-item page size so cursor retrieval completes before cursor expiry.
+- Removes stale local SKU cache rows only after a complete catalog snapshot passes all validation.
+- Applies the validated local refresh in one database transaction and rolls it back completely if any SKU fails.
+- Reports expected totals, received unique SKUs, page count, duplicates, removals, and errors in CLI/admin results.
+- This catalog refresh remains read-only toward Walmart and never changes inventory, prices, content, orders, or tracking.
+
 ## 1.6.3
 
 - Fixed the mapping and sync status colors when Magento loads the SKU grid asynchronously.

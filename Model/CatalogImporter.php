@@ -44,18 +44,55 @@ class CatalogImporter
         $errors = 0;
         $recordsSeen = 0;
         $uniqueSkus = [];
+        $catalogItems = [];
+        $reportedTotal = 0;
+        $pages = 0;
         $cursor = null;
-        $offset = 0;
+        $pageFingerprints = [];
+        $requestedLimit = $limit !== null ? max(0, (int)$limit) : null;
+        $pageSize = $requestedLimit !== null && $requestedLimit > 0
+            ? min(1000, $requestedLimit)
+            : 1000;
+
+        // Fetch and validate the complete cursor snapshot before changing Magento.
+        // Deferring product matching and database work also avoids cursor expiry.
         do {
-            $response = $this->client->getAllItems($cursor, $this->config->getBatchSize(), $offset);
+            $response = $this->client->getAllItems($cursor, $pageSize, null);
+            $pages++;
             $items = $this->extractItems($response);
-            $reportedTotal = $this->extractReportedTotal($response);
-            if (!$items && $reportedTotal > 0) {
+            $pageReportedTotal = $this->extractReportedTotal($response);
+            if ($pageReportedTotal > 0) {
+                if ($reportedTotal > 0 && $reportedTotal !== $pageReportedTotal) {
+                    throw new \RuntimeException(sprintf(
+                        'Walmart changed the reported catalog total during pagination (%d to %d). No Magento catalog data was changed; run the refresh again.',
+                        $reportedTotal,
+                        $pageReportedTotal
+                    ));
+                }
+                $reportedTotal = $pageReportedTotal;
+            }
+            if (!$items && $reportedTotal > 0 && $recordsSeen === 0) {
                 throw new \RuntimeException('Walmart reported catalog items, but the response structure was not recognized. No records were imported.');
             }
+
+            $pageSkus = [];
+            foreach ($items as $item) {
+                $pageSkus[] = $this->value($item, ['sku', 'SKU', 'partnerItemId']);
+            }
+            $fingerprint = sha1(implode("\n", $pageSkus));
+            if ($items && isset($pageFingerprints[$fingerprint])) {
+                throw new \RuntimeException(sprintf(
+                    'Walmart returned a repeated catalog page while using cursor pagination (page %d). No Magento catalog data was changed; run the refresh again.',
+                    $pages
+                ));
+            }
+            if ($items) {
+                $pageFingerprints[$fingerprint] = true;
+            }
+
             $recordsSeen += count($items);
             foreach ($items as $item) {
-                if ($limit !== null && $imported >= (int)$limit) {
+                if ($requestedLimit !== null && count($catalogItems) >= $requestedLimit) {
                     break 2;
                 }
                 $sku = $this->value($item, ['sku', 'SKU', 'partnerItemId']);
@@ -65,6 +102,47 @@ class CatalogImporter
                     continue;
                 }
                 $uniqueSkus[$sku] = true;
+                $catalogItems[$sku] = $item;
+            }
+
+            if ($requestedLimit !== null && count($catalogItems) >= $requestedLimit) {
+                break;
+            }
+            if ($reportedTotal > 0 && $recordsSeen >= $reportedTotal) {
+                break;
+            }
+
+            $nextCursor = $this->extractCursor($response);
+            if ($nextCursor === null || $nextCursor === '') {
+                break;
+            }
+            $cursor = $nextCursor;
+            if ($pages >= 1000) {
+                throw new \RuntimeException('Walmart catalog pagination exceeded 1,000 pages. No Magento catalog data was changed.');
+            }
+        } while ($items);
+
+        $unique = count($uniqueSkus);
+        $isCompleteImport = $requestedLimit === null;
+        if ($isCompleteImport) {
+            if ($reportedTotal <= 0) {
+                throw new \RuntimeException('Walmart did not report the catalog total. Completeness could not be verified, so no Magento catalog data was changed.');
+            }
+            if ($recordsSeen !== $reportedTotal || $unique !== $reportedTotal || $errors > 0) {
+                throw new \RuntimeException(sprintf(
+                    'Incomplete Walmart catalog received: expected %d, received %d records and %d unique SKUs with %d errors. No Magento catalog data was changed.',
+                    $reportedTotal,
+                    $recordsSeen,
+                    $unique,
+                    $errors
+                ));
+            }
+        }
+
+        $removed = 0;
+        $this->storage->beginCatalogTransaction();
+        try {
+            foreach ($catalogItems as $sku => $item) {
                 $existing = $this->storage->getByWalmartSku($sku);
                 $match = $this->matchMagentoProduct($sku);
                 $mapping = [
@@ -86,21 +164,40 @@ class CatalogImporter
                 $this->syncProductStatusAfterMappingChange($existing, $mapping);
                 $imported++;
             }
-            if ($reportedTotal > $recordsSeen && $items) {
-                if ($recordsSeen > 10000) {
-                    throw new \RuntimeException('Walmart catalog exceeds the supported offset range of 10,000 records. Import stopped without changing Walmart data.');
-                }
-                $offset = $recordsSeen;
-            } else {
-                $offset = null;
-            }
-        } while ($offset !== null && $items);
 
-        $unique = count($uniqueSkus);
-        $repeated = max(0, $imported - $unique);
-        $message = sprintf('Processed %d Walmart catalog records: %d unique SKUs, %d repeated SKU records, %d errors.', $imported, $unique, $repeated, $errors);
+            $removed = $isCompleteImport
+                ? $this->storage->deleteSkusMissingFromCompleteCatalog(array_keys($uniqueSkus))
+                : 0;
+            $this->storage->commitCatalogTransaction();
+        } catch (\Exception $exception) {
+            $this->storage->rollBackCatalogTransaction();
+            throw new \RuntimeException(
+                'Magento catalog refresh failed and was rolled back: ' . $exception->getMessage(),
+                0,
+                $exception
+            );
+        }
+        $repeated = max(0, $recordsSeen - $unique);
+        $message = sprintf(
+            'Processed %d Walmart catalog records across %d page(s): %d unique SKUs, expected %d, %d repeated records, %d stale local rows removed, %d errors.',
+            $imported,
+            $pages,
+            $unique,
+            $reportedTotal,
+            $repeated,
+            $removed,
+            $errors
+        );
         $this->logger->log('catalog_import', $errors ? 'partial' : 'success', null, null, null, $unique, $message);
-        return ['imported' => $imported, 'unique' => $unique, 'repeated' => $repeated, 'errors' => $errors];
+        return [
+            'imported' => $imported,
+            'unique' => $unique,
+            'expected' => $reportedTotal,
+            'pages' => $pages,
+            'repeated' => $repeated,
+            'removed' => $removed,
+            'errors' => $errors
+        ];
     }
 
     private function matchMagentoProduct($walmartSku)

@@ -42,7 +42,7 @@ class Client
 
     public function getAllItems($nextCursor = null, $limit = 50, $offset = null)
     {
-        $query = ['limit' => max(1, min(200, (int)$limit))];
+        $query = ['limit' => max(1, min(1000, (int)$limit))];
         if ($offset !== null) {
             $query['offset'] = max(0, (int)$offset);
         } elseif ($nextCursor !== null && $nextCursor !== '') {

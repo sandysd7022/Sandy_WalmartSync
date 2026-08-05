@@ -18,4 +18,17 @@
             </argument>
         </arguments>
     </type>
+    <type name="Sandy\WalmartSync\Model\ResourceModel\WalmartSku\Grid\Collection">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">sandy_walmartsync_sku</argument>
+            <argument name="resourceModel" xsi:type="string">Sandy\WalmartSync\Model\ResourceModel\WalmartSku</argument>
+        </arguments>
+    </type>
+    <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
+        <arguments>
+            <argument name="collections" xsi:type="array">
+                <item name="sandy_walmartsync_sku_listing_data_source" xsi:type="string">Sandy\WalmartSync\Model\ResourceModel\WalmartSku\Grid\Collection</item>
+            </argument>
+        </arguments>
+    </type>
 </config>

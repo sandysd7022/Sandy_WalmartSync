@@ -16,6 +16,7 @@ class PublishedStatus implements OptionSourceInterface
             ['value' => 'PUBLISHED', 'label' => __('Published')],
             ['value' => 'UNPUBLISHED', 'label' => __('Unpublished')],
             ['value' => 'SYSTEM_PROBLEM', 'label' => __('System Problem')],
+            ['value' => 'DRAFT', 'label' => __('Draft')],
         ];
     }
 }

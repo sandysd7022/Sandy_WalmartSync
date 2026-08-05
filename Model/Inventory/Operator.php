@@ -63,9 +63,12 @@ class Operator
         return $results;
     }
 
-    public function zero($sku = null, $limit = null, $execute = false)
+    public function zero($sku = null, $limit = null, $execute = false, $scope = null, $expectedCandidateHash = null)
     {
-        $records = $this->storage->getAll($sku, $limit);
+        $records = $scope === 'published-unmatched'
+            ? $this->storage->getPublishedUnmatched($limit)
+            : $this->storage->getAll($sku, $limit);
+        $candidateHash = $this->getCandidateHash($records);
         if (!$execute) {
             $results = [];
             foreach ($records as $record) {
@@ -76,24 +79,32 @@ class Operator
                     'status' => 'dry_run'
                 ];
             }
-            return ['backup' => null, 'results' => $results, 'errors' => 0];
+            return ['backup' => null, 'results' => $results, 'errors' => 0, 'scope' => $scope, 'total' => count($records), 'candidate_hash' => $candidateHash];
         }
         if (!$this->config->isWriteEnabled()) {
             throw new LocalizedException(__('Walmart write operations are disabled.'));
         }
-        $backup = $this->backup->execute($sku, $limit);
+        if ($scope === 'published-unmatched' && (string)$expectedCandidateHash !== $candidateHash) {
+            throw new LocalizedException(__('Candidate set changed or was not confirmed. Run the dry run again and provide its exact candidate hash.'));
+        }
+        $suffix = $scope === 'published-unmatched'
+            ? 'published_unmatched'
+            : ($sku ? preg_replace('/[^A-Za-z0-9_.-]/', '_', $sku) : 'all');
+        $backup = $this->backup->executeRecords($records, $suffix, $scope);
         if ($backup['total'] === 0) {
             throw new LocalizedException(__('No local Walmart SKUs matched this operation. Import the catalog first.'));
         }
         if ($backup['errors'] > 0 || $backup['captured'] !== $backup['total']) {
             throw new LocalizedException(__('Zero operation aborted because the inventory backup was incomplete.'));
         }
-        $records = $this->storage->getAll($sku, $limit);
         $results = [];
         $errors = 0;
         foreach ($records as $record) {
             try {
-                $previous = $record['current_qty'];
+                $recordSku = (string)$record['walmart_sku'];
+                $previous = array_key_exists($recordSku, $backup['quantities'])
+                    ? $backup['quantities'][$recordSku]
+                    : $record['current_qty'];
                 $this->client->updateInventory($record['walmart_sku'], 0, $this->config->getShipNode());
                 $this->storage->updateStatus($record['walmart_sku'], [
                     'current_qty' => 0,
@@ -110,7 +121,7 @@ class Operator
                 $results[] = ['walmart_sku' => $record['walmart_sku'], 'previous_qty' => $record['current_qty'], 'new_qty' => 0, 'status' => 'error', 'error' => $exception->getMessage()];
             }
         }
-        return ['backup' => $backup, 'results' => $results, 'errors' => $errors];
+        return ['backup' => $backup, 'results' => $results, 'errors' => $errors, 'scope' => $scope, 'total' => count($records), 'candidate_hash' => $candidateHash];
     }
 
     public function sync($sku = null, $limit = null, $execute = false)
@@ -168,5 +179,14 @@ class Operator
             ['walmart_last_sync_at' => gmdate('Y-m-d H:i:s'), 'walmart_last_error' => $error],
             0
         );
+    }
+
+    private function getCandidateHash(array $records)
+    {
+        $skus = array_map(function ($record) {
+            return (string)$record['walmart_sku'];
+        }, $records);
+        sort($skus, SORT_STRING);
+        return hash('sha256', implode("\n", $skus));
     }
 }

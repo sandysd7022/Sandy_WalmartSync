@@ -20,6 +20,21 @@ class SkuStorage
         $connection->insertOnDuplicate($table, $data, array_keys($data));
     }
 
+    public function beginCatalogTransaction()
+    {
+        $this->resource->getConnection()->beginTransaction();
+    }
+
+    public function commitCatalogTransaction()
+    {
+        $this->resource->getConnection()->commit();
+    }
+
+    public function rollBackCatalogTransaction()
+    {
+        $this->resource->getConnection()->rollBack();
+    }
+
     public function getByWalmartSku($sku)
     {
         $connection = $this->resource->getConnection();
@@ -46,6 +61,27 @@ class SkuStorage
         return $connection->fetchAll($select);
     }
 
+    /**
+     * Return the narrow, safe set used to retire orphaned Walmart inventory.
+     *
+     * Ambiguous and unverified option mappings are intentionally excluded. They
+     * still have a possible Magento relationship and must remain in manual review.
+     */
+    public function getPublishedUnmatched($limit = null)
+    {
+        $connection = $this->resource->getConnection();
+        $select = $connection->select()
+            ->from($this->resource->getTableName('sandy_walmartsync_sku'))
+            ->where('UPPER(TRIM(published_status)) = ?', 'PUBLISHED')
+            ->where('mapping_type = ?', 'unmatched')
+            ->where('(product_id IS NULL OR product_id = ?)', 0)
+            ->order('entity_id ASC');
+        if ($limit !== null && (int)$limit > 0) {
+            $select->limit((int)$limit);
+        }
+        return $connection->fetchAll($select);
+    }
+
     public function updateStatus($sku, array $data)
     {
         $this->resource->getConnection()->update(
@@ -55,13 +91,34 @@ class SkuStorage
         );
     }
 
+    public function deleteSkusMissingFromCompleteCatalog(array $walmartSkus)
+    {
+        $walmartSkus = array_values(array_unique(array_filter(array_map('strval', $walmartSkus))));
+        if (!$walmartSkus) {
+            throw new \InvalidArgumentException('A complete Walmart catalog cannot be empty.');
+        }
+
+        return (int)$this->resource->getConnection()->delete(
+            $this->resource->getTableName('sandy_walmartsync_sku'),
+            ['walmart_sku NOT IN (?)' => $walmartSkus]
+        );
+    }
+
     public function resetControlsWhenMappingChanges($sku, array $mapping)
     {
         $existing = $this->getByWalmartSku($sku);
         if (!$existing) {
             return;
         }
-        $fields = ['mapping_type', 'magento_sku', 'product_id', 'option_id', 'option_type_id'];
+
+        // Custom-option IDs are Magento database implementation details. Product
+        // imports can recreate an unchanged option and assign new option_id and
+        // option_type_id values. The Walmart mapping is still the same when its
+        // exact SKU continues to resolve uniquely to the same Magento parent.
+        // CatalogImporter has already performed that unique exact-SKU match, so
+        // compare only the stable logical identity here. A mapping-type, parent
+        // SKU, or parent product change still revokes approval as a safety guard.
+        $fields = ['mapping_type', 'magento_sku', 'product_id'];
         foreach ($fields as $field) {
             $old = isset($existing[$field]) ? (string)$existing[$field] : '';
             $new = isset($mapping[$field]) ? (string)$mapping[$field] : '';

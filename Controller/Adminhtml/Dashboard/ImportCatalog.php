@@ -28,10 +28,13 @@ class ImportCatalog extends Action
             }
             $result = $this->importer->execute();
             $this->messageManager->addSuccessMessage(__(
-                'Catalog refresh completed: %1 records processed, %2 unique SKUs, %3 repeated records, %4 errors. No Walmart inventory was changed.',
+                'Catalog refresh completed: %1 records processed across %2 pages, %3 unique of %4 expected SKUs, %5 repeated records, %6 stale local rows removed, %7 errors. No Walmart data was changed.',
                 $result['imported'],
+                $result['pages'],
                 $result['unique'],
+                $result['expected'],
                 $result['repeated'],
+                $result['removed'],
                 $result['errors']
             ));
         } catch (\Exception $exception) {

@@ -9,6 +9,10 @@
             <block class="Magento\Backend\Block\Template"
                    name="sandy_walmartsync.sku.guide"
                    template="Sandy_WalmartSync::sku/guide.phtml"
+                   before="sandy_walmartsync.sku.status_tabs"/>
+            <block class="Sandy\WalmartSync\Block\Adminhtml\Sku\StatusTabs"
+                   name="sandy_walmartsync.sku.status_tabs"
+                   template="Sandy_WalmartSync::sku/status-tabs.phtml"
                    before="sandy_walmartsync_sku_listing"/>
             <uiComponent name="sandy_walmartsync_sku_listing"/>
         </referenceContainer>

@@ -11,6 +11,8 @@ Magento Open Source 2.3.4 / PHP 7.1 module for safe Magento-to-Walmart catalog i
 - Preview commands never write to Walmart.
 - Zero execution creates and verifies a remote inventory backup before changing any SKU.
 - Zero-all requires the exact confirmation `ZERO-ALL` and does not support a partial `--limit` execution.
+- Published-unmatched zeroing includes only currently published Walmart rows explicitly classified as unmatched and without a Magento product ID. Ambiguous and unverified option mappings are excluded.
+- Published-unmatched execution requires the reviewed dry-run candidate hash and creates a second mandatory remote inventory backup from the exact same frozen candidate set before writing.
 - Inventory sync skips disabled, unmatched, ambiguous and unverified mappings. It sends zero only for ready SKUs that are out of stock, manually forced to zero, disabled in Magento, or inside the meltable zero period.
 - Return-exemption status is reference history only and does not control inventory synchronization.
 - Meltable products can be detected from configured Magento categories and automatically held at zero from May 1 through November 30.
@@ -67,11 +69,13 @@ Open **Walmart Sync > Inventory Dashboard**. The page shows safety settings, inv
 
 The **Known Walmart SKUs** grid provides three guarded Admin actions:
 
+Publication-status tabs above the grid show All, Unpublished, Errors, Drafts and Published totals from the latest successful Walmart catalog refresh. Selecting a tab filters the local grid only and never contacts Walmart.
+
 - **Verify Selected Custom-Option Mappings** after checking the Walmart SKU, parent Magento SKU and option title.
 - **Enable Sync for Selected Magento Products** to opt in each unique mapped parent product.
 - **Disable Sync for Selected Magento Products** to make the selected products SKIP.
 
-These actions change Magento controls only and never call Walmart. Custom-option verification is required once and remains valid until the mapping changes. Direct product SKU mappings do not require verification. Custom-option rows inherit sync enablement, meltable status and quantity from their parent Magento product.
+These actions change Magento controls only and never call Walmart. Custom-option verification is required once and remains valid until the logical mapping changes. Regenerated internal Magento option IDs do not revoke approval when the exact option SKU still resolves uniquely to the same parent product. A changed parent, ambiguous option or unmatched SKU is disabled for review. Direct product SKU mappings do not require verification. Custom-option rows inherit sync enablement, meltable status and quantity from their parent Magento product.
 
 Sync enablement is intentionally managed from the SKU review grid rather than a duplicate product-edit toggle. The grid shows the effective stored value used by inventory preview and execution.
 
@@ -81,6 +85,20 @@ Return exemptions were rejected and no longer control inventory synchronization.
 
 Bulk zero-all, sync execution and the complete catalog import remain CLI-only while the catalog is being reconciled. This prevents accidental Walmart changes and avoids browser/Cloudflare timeouts.
 
+To retire inventory for published Walmart SKUs which have no Magento product, first keep cron disabled and run the guarded preview:
+
+```bash
+php bin/magento walmart:inventory:zero --scope=published-unmatched
+```
+
+Review the candidate count and SKUs. An optional separate read-only remote backup is available with `walmart:inventory:backup --scope=published-unmatched`. After written client approval, enable Walmart writes and execute with both the exact confirmation phrase and the hash printed by the complete dry run:
+
+```bash
+php bin/magento walmart:inventory:zero --scope=published-unmatched --execute --confirm="ZERO-PUBLISHED-UNMATCHED" --candidate-hash="<DRY-RUN-HASH>"
+```
+
+Execution creates another mandatory remote backup and aborts before any write if the backup is incomplete or the candidate set changed. It does not alter matched Magento products, ambiguous mappings, or unverified custom-option mappings.
+
 ### Developer CLI workflow
 
 Keep Walmart writes and inventory cron disabled. Import the full catalog, then reconcile the unique local SKU records:
@@ -89,6 +107,17 @@ Keep Walmart writes and inventory cron disabled. Import the full catalog, then r
 php bin/magento walmart:catalog:import
 php bin/magento walmart:catalog:reconcile
 ```
+
+The complete import uses Walmart `nextCursor` pagination and fetches the full
+snapshot before changing the local Magento SKU cache. Magento applies the
+refresh only when the received record count and unique-SKU count both equal
+Walmart's reported total. A repeated page, expired/incomplete cursor, malformed
+item, changed total, or local save failure rejects and rolls back the refresh.
+After a validated complete refresh, stale rows that Walmart no longer returns
+are removed from the local cache. This command never writes data to Walmart.
+
+The success result must show the same values for `unique SKUs` and
+`Walmart expected`, with `repeated records: 0` and `errors: 0`.
 
 Historical exemption export/import CLI commands remain in the code for audit or recovery purposes, but they are not part of the current inventory rollout.
 

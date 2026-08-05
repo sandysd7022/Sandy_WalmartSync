@@ -29,10 +29,13 @@ class CatalogImportCommand extends Command
     {
         $result = $this->importer->execute($input->getOption('limit'));
         $output->writeln(sprintf(
-            '<info>Processed: %d; unique SKUs: %d; repeated SKU records: %d; errors: %d. No inventory was changed.</info>',
+            '<info>Processed: %d; unique SKUs: %d; Walmart expected: %d; pages: %d; repeated records: %d; stale local rows removed: %d; errors: %d. No Walmart data was changed.</info>',
             $result['imported'],
             $result['unique'],
+            $result['expected'],
+            $result['pages'],
             $result['repeated'],
+            $result['removed'],
             $result['errors']
         ));
         return $result['errors'] ? 1 : 0;
