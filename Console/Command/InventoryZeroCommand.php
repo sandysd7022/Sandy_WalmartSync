@@ -22,11 +22,11 @@ class InventoryZeroCommand extends Command
         $this->setName('walmart:inventory:zero')
             ->setDescription('Preview or execute zero inventory for one SKU, all SKUs, or a guarded scope')
             ->addOption('sku', null, InputOption::VALUE_OPTIONAL, 'One Walmart SKU; omit only for zero-all')
-            ->addOption('scope', null, InputOption::VALUE_OPTIONAL, 'Guarded scope: published-unmatched')
+            ->addOption('scope', null, InputOption::VALUE_OPTIONAL, 'Guarded scope: published-unmatched or unpublished-meltable')
             ->addOption('limit', null, InputOption::VALUE_OPTIONAL, 'Maximum records (dry-run or controlled batch)')
             ->addOption('execute', null, InputOption::VALUE_NONE, 'Actually send inventory updates')
-            ->addOption('candidate-hash', null, InputOption::VALUE_OPTIONAL, 'Exact hash printed by the reviewed published-unmatched dry run')
-            ->addOption('confirm', null, InputOption::VALUE_OPTIONAL, 'Required confirmation: ZERO:<sku>, ZERO-PUBLISHED-UNMATCHED, or ZERO-ALL');
+            ->addOption('candidate-hash', null, InputOption::VALUE_OPTIONAL, 'Exact hash printed by the reviewed guarded-scope dry run')
+            ->addOption('confirm', null, InputOption::VALUE_OPTIONAL, 'Required confirmation: ZERO:<sku>, ZERO-PUBLISHED-UNMATCHED, ZERO-UNPUBLISHED-MELTABLE, or ZERO-ALL');
         parent::configure();
     }
 
@@ -35,8 +35,9 @@ class InventoryZeroCommand extends Command
         $sku = $input->getOption('sku');
         $scope = $input->getOption('scope');
         $execute = (bool)$input->getOption('execute');
-        if ($scope && $scope !== 'published-unmatched') {
-            $output->writeln('<error>Unknown scope. Supported value: published-unmatched.</error>');
+        $guardedScopes = ['published-unmatched', 'unpublished-meltable'];
+        if ($scope && !in_array($scope, $guardedScopes, true)) {
+            $output->writeln('<error>Unknown scope. Supported values: published-unmatched, unpublished-meltable.</error>');
             return 2;
         }
         if ($scope && $sku) {
@@ -46,7 +47,9 @@ class InventoryZeroCommand extends Command
         if ($execute) {
             $expected = $scope === 'published-unmatched'
                 ? 'ZERO-PUBLISHED-UNMATCHED'
-                : ($sku ? 'ZERO:' . $sku : 'ZERO-ALL');
+                : ($scope === 'unpublished-meltable'
+                    ? 'ZERO-UNPUBLISHED-MELTABLE'
+                    : ($sku ? 'ZERO:' . $sku : 'ZERO-ALL'));
             if ((string)$input->getOption('confirm') !== $expected) {
                 $output->writeln(sprintf('<error>Execution refused. Use --confirm="%s" after reviewing the dry run.</error>', $expected));
                 return 2;
@@ -55,7 +58,7 @@ class InventoryZeroCommand extends Command
                 $output->writeln('<error>Bulk zero execution cannot use --limit. Use it only for a dry-run sample.</error>');
                 return 2;
             }
-            if ($scope === 'published-unmatched' && !$input->getOption('candidate-hash')) {
+            if ($scope && !$input->getOption('candidate-hash')) {
                 $output->writeln('<error>Execution refused. Provide --candidate-hash from the complete reviewed dry run.</error>');
                 return 2;
             }

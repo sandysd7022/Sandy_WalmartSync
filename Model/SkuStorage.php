@@ -61,6 +61,16 @@ class SkuStorage
         return $connection->fetchAll($select);
     }
 
+    public function getCount()
+    {
+        $connection = $this->resource->getConnection();
+        $select = $connection->select()->from(
+            $this->resource->getTableName('sandy_walmartsync_sku'),
+            ['row_count' => new \Zend_Db_Expr('COUNT(*)')]
+        );
+        return (int)$connection->fetchOne($select);
+    }
+
     /**
      * Return the narrow, safe set used to retire orphaned Walmart inventory.
      *
@@ -75,6 +85,32 @@ class SkuStorage
             ->where('UPPER(TRIM(published_status)) = ?', 'PUBLISHED')
             ->where('mapping_type = ?', 'unmatched')
             ->where('(product_id IS NULL OR product_id = ?)', 0)
+            ->order('entity_id ASC');
+        if ($limit !== null && (int)$limit > 0) {
+            $select->limit((int)$limit);
+        }
+        return $connection->fetchAll($select);
+    }
+
+    /**
+     * Return unpublished Walmart SKUs that Magento has confirmed as meltable.
+     *
+     * Direct mappings are safe without manual mapping verification. A custom
+     * option is included only after its exact mapping was manually verified.
+     * Unmatched and ambiguous rows are deliberately excluded because Magento
+     * cannot safely determine their meltable classification.
+     */
+    public function getUnpublishedMeltable($limit = null)
+    {
+        $connection = $this->resource->getConnection();
+        $select = $connection->select()
+            ->from($this->resource->getTableName('sandy_walmartsync_sku'))
+            ->where('UPPER(TRIM(published_status)) = ?', 'UNPUBLISHED')
+            ->where('is_meltable = ?', 1)
+            ->where('product_id IS NOT NULL')
+            ->where('product_id > ?', 0)
+            ->where('mapping_type IN (?)', ['product_sku', 'product_attribute', 'custom_option'])
+            ->where("(mapping_type != 'custom_option' OR mapping_verified = 1)")
             ->order('entity_id ASC');
         if ($limit !== null && (int)$limit > 0) {
             $select->limit((int)$limit);
@@ -104,9 +140,11 @@ class SkuStorage
         );
     }
 
-    public function resetControlsWhenMappingChanges($sku, array $mapping)
+    public function resetControlsWhenMappingChanges($sku, array $mapping, $existing = null)
     {
-        $existing = $this->getByWalmartSku($sku);
+        if ($existing === null) {
+            $existing = $this->getByWalmartSku($sku);
+        }
         if (!$existing) {
             return;
         }

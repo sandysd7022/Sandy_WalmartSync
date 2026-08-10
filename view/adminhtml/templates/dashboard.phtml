@@ -10,9 +10,19 @@ $escape = function ($value) use ($block) {
         <table class="admin__table-secondary">
             <tr class="<?= $block->isModuleEnabled() ? 'walmart-status-ok' : 'walmart-status-danger' ?>"><th><?= $escape(__('Module')) ?></th><td><strong><?= $escape($block->isModuleEnabled() ? __('Enabled') : __('Disabled')) ?></strong></td></tr>
             <tr class="<?= $block->isWriteEnabled() ? 'walmart-status-live' : 'walmart-status-safe' ?>"><th><?= $escape(__('Walmart Write Operations')) ?></th><td><strong><?= $escape($block->isWriteEnabled() ? __('ENABLED — LIVE WRITES ALLOWED') : __('Disabled — Safe')) ?></strong></td></tr>
-            <tr class="<?= $block->isCronEnabled() ? 'walmart-status-live' : 'walmart-status-safe' ?>"><th><?= $escape(__('Automatic Inventory Cron')) ?></th><td><strong><?= $escape($block->isCronEnabled() ? __('ENABLED — AUTOMATIC') : __('Disabled — Manual Only')) ?></strong></td></tr>
+            <tr class="<?= $block->isCronEnabled() ? 'walmart-status-live' : 'walmart-status-safe' ?>"><th><?= $escape(__('Automatic Catalog + Inventory Cron')) ?></th><td><strong><?= $escape($block->isCronEnabled() ? __('ENABLED — AUTOMATIC') : __('Disabled — Manual Only')) ?></strong></td></tr>
         </table>
         <p class="note"><?= $escape(__('Keep Walmart writes and cron disabled until mappings, meltable categories and the complete inventory preview are reviewed.')) ?></p>
+    </div>
+</div>
+
+<div class="admin__fieldset-wrapper walmart-sync-dashboard">
+    <div class="admin__fieldset-wrapper-title"><strong class="title"><?= $escape(__('Automatic Scheduled Sequence')) ?></strong></div>
+    <div class="admin__fieldset-wrapper-content">
+        <p><strong><?= $escape(__('1. Refresh complete Walmart catalog (read only)')) ?></strong></p>
+        <p><strong><?= $escape(__('2. Rebuild mappings and calculate current Magento quantities and seasonal rules')) ?></strong></p>
+        <p><strong><?= $escape(__('3. Send eligible inventory changes to Walmart')) ?></strong></p>
+        <p class="note"><?= $escape(__('If the catalog refresh is incomplete or fails, the run stops before any Walmart inventory write. No terminal catalog-refresh command is required for normal operation.')) ?></p>
     </div>
 </div>
 
@@ -63,7 +73,7 @@ $escape = function ($value) use ($block) {
                     </form>
                 <?php else: ?>
                     <p class="message message-warning">
-                        <?= $escape(__('For safety, set Walmart Write Operations and Automatic Inventory Cron to No before Apply becomes available.')) ?>
+                        <?= $escape(__('For safety, set Walmart Write Operations and Automatic Catalog + Inventory Cron to No before Apply becomes available.')) ?>
                     </p>
                 <?php endif; ?>
                 <p class="note"><?= $escape(__('This preview expires after 30 minutes and is rejected automatically if the candidate mappings change.')) ?></p>
@@ -90,6 +100,7 @@ $escape = function ($value) use ($block) {
             <tr><th><?= $escape(__('Affected Meltable Walmart SKUs (Last Preview)')) ?></th><td><?= (int)$summary['meltable_skus'] ?></td></tr>
             <tr class="walmart-status-warning"><th><?= $escape(__('Seasonally Forced to Zero (Last Preview)')) ?></th><td><strong><?= (int)$summary['seasonal_zero'] ?></strong></td></tr>
             <tr class="<?= (int)$summary['sync_errors'] ? 'walmart-status-danger' : 'walmart-status-ok' ?>"><th><?= $escape(__('Rows with Last Sync Error')) ?></th><td><strong><?= (int)$summary['sync_errors'] ?></strong></td></tr>
+            <tr class="walmart-status-info"><th><?= $escape(__('Latest Automatic Catalog Refresh (UTC)')) ?></th><td><strong><?= $escape($summary['last_import_at'] ?: __('Never')) ?></strong></td></tr>
             <tr class="walmart-status-info"><th><?= $escape(__('Latest Actual Sync Time (UTC)')) ?></th><td><strong><?= $escape($summary['last_sync_at'] ?: __('Never')) ?></strong></td></tr>
         </table>
         <p class="note"><?= $escape(__('Preview totals are refreshed by walmart:inventory:preview and do not change Walmart inventory.')) ?></p>
@@ -121,6 +132,6 @@ $escape = function ($value) use ($block) {
             <?php endforeach; ?>
         </table>
         <a class="action-default primary" href="<?= $block->escapeUrl($block->getUrl('sandy_walmartsync/sku/index')) ?>"><span><?= $escape(__('Open SKU Review Grid')) ?></span></a>
-        <p class="note"><?= $escape(__('The complete Walmart catalog refresh is a long-running maintenance task and is intentionally not available in the browser. An administrator runs walmart:catalog:import from the server to avoid a browser or Cloudflare timeout.')) ?></p>
+        <p class="note"><?= $escape(__('Routine catalog refresh and inventory calculation run automatically in the scheduled server job. No browser action or terminal catalog-refresh command is required for normal operation.')) ?></p>
     </div>
 </div>

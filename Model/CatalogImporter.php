@@ -38,7 +38,7 @@ class CatalogImporter
         $this->productAction = $productAction;
     }
 
-    public function execute($limit = null)
+    public function execute($limit = null, $protectAgainstUnexpectedShrink = false)
     {
         $imported = 0;
         $errors = 0;
@@ -137,30 +137,58 @@ class CatalogImporter
                     $errors
                 ));
             }
+
+            // Automatic jobs must never replace a healthy local catalog with a
+            // technically valid but unexpectedly scoped/smaller API snapshot.
+            // Manual imports remain available for intentional catalog reductions.
+            if ($protectAgainstUnexpectedShrink) {
+                $existingTotal = $this->storage->getCount();
+                $minimumExpected = (int)floor($existingTotal * 0.80);
+                if ($existingTotal >= 100 && $reportedTotal < $minimumExpected) {
+                    throw new \RuntimeException(sprintf(
+                        'Walmart catalog total unexpectedly dropped from %d local SKU(s) to %d API SKU(s). Automatic refresh and inventory writes were stopped for review.',
+                        $existingTotal,
+                        $reportedTotal
+                    ));
+                }
+            }
         }
 
-        $removed = 0;
-        $this->storage->beginCatalogTransaction();
-        try {
-            foreach ($catalogItems as $sku => $item) {
-                $existing = $this->storage->getByWalmartSku($sku);
-                $match = $this->matchMagentoProduct($sku);
-                $mapping = [
-                    'mapping_type' => isset($match['mapping_type']) ? $match['mapping_type'] : 'unmatched',
-                    'magento_sku' => isset($match['sku']) ? $match['sku'] : null,
-                    'product_id' => isset($match['id']) ? $match['id'] : null,
-                    'option_id' => isset($match['option_id']) ? $match['option_id'] : null,
-                    'option_type_id' => isset($match['option_type_id']) ? $match['option_type_id'] : null,
-                    'option_title' => isset($match['option_title']) ? $match['option_title'] : null
-                ];
-                $this->storage->resetControlsWhenMappingChanges($sku, $mapping);
-                $this->storage->upsert(array_merge([
+        // Product and custom-option matching can perform thousands of reads.
+        // Resolve all mappings first so the write transaction stays short.
+        $preparedRows = [];
+        foreach ($catalogItems as $sku => $item) {
+            $existing = $this->storage->getByWalmartSku($sku);
+            $match = $this->matchMagentoProduct($sku);
+            $mapping = [
+                'mapping_type' => isset($match['mapping_type']) ? $match['mapping_type'] : 'unmatched',
+                'magento_sku' => isset($match['sku']) ? $match['sku'] : null,
+                'product_id' => isset($match['id']) ? $match['id'] : null,
+                'option_id' => isset($match['option_id']) ? $match['option_id'] : null,
+                'option_type_id' => isset($match['option_type_id']) ? $match['option_type_id'] : null,
+                'option_title' => isset($match['option_title']) ? $match['option_title'] : null
+            ];
+            $preparedRows[$sku] = [
+                'existing' => $existing,
+                'mapping' => $mapping,
+                'data' => array_merge([
                     'walmart_sku' => $sku,
                     'item_id' => $this->value($item, ['itemId', 'item_id', 'wpid']),
                     'product_name' => $this->value($item, ['productName', 'product_name', 'title']),
                     'published_status' => $this->value($item, ['publishedStatus', 'published_status']),
                     'lifecycle_status' => $this->value($item, ['lifecycleStatus', 'lifecycle_status'])
-                ], $mapping));
+                ], $mapping)
+            ];
+        }
+
+        $removed = 0;
+        $this->storage->beginCatalogTransaction();
+        try {
+            foreach ($preparedRows as $sku => $prepared) {
+                $existing = $prepared['existing'];
+                $mapping = $prepared['mapping'];
+                $this->storage->resetControlsWhenMappingChanges($sku, $mapping, $existing);
+                $this->storage->upsert($prepared['data']);
                 $this->syncProductStatusAfterMappingChange($existing, $mapping);
                 $imported++;
             }

@@ -26,6 +26,7 @@ class CatalogReconciler
             'send_actions' => 0,
             'skip_actions' => 0,
             'sync_errors' => 0,
+            'last_import_at' => null,
             'last_sync_at' => null,
             'mapping_types' => [],
             'exemption_statuses' => [],
@@ -34,7 +35,11 @@ class CatalogReconciler
 
         $meltableProductIds = [];
         foreach ($rows as $row) {
-            if (!empty($row['magento_sku'])) {
+            $mappingType = isset($row['mapping_type']) ? (string)$row['mapping_type'] : 'unmatched';
+            $hasConfirmedMapping = !in_array($mappingType, ['unmatched', 'ambiguous_option'], true)
+                && !empty($row['product_id'])
+                && !empty($row['magento_sku']);
+            if ($hasConfirmedMapping) {
                 $result['matched']++;
             } else {
                 $result['unmatched']++;
@@ -64,6 +69,12 @@ class CatalogReconciler
             }
             if (!empty($row['last_error'])) {
                 $result['sync_errors']++;
+            }
+            if (
+                !empty($row['last_imported_at']) &&
+                ($result['last_import_at'] === null || $row['last_imported_at'] > $result['last_import_at'])
+            ) {
+                $result['last_import_at'] = $row['last_imported_at'];
             }
             if (
                 !empty($row['last_synced_at']) &&

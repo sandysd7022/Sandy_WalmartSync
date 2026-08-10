@@ -53,13 +53,19 @@ class StatusTabs extends Template
     {
         $params = [];
         if ($status !== '') {
-            $params['_query'] = ['filters' => ['published_status' => $status]];
+            $params['_query'] = ['published_status' => $status];
         }
         return $this->getUrl('sandy_walmartsync/sku/index', $params);
     }
 
     public function getActiveStatus()
     {
+        $status = $this->getRequest()->getParam('published_status');
+        if ($status !== null && $status !== '') {
+            return strtoupper(trim((string)$status));
+        }
+
+        // Retain compatibility with links generated before version 1.6.13.
         $filters = $this->getRequest()->getParam('filters', []);
         if (is_string($filters)) {
             parse_str($filters, $parsed);

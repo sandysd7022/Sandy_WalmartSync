@@ -29,10 +29,16 @@ class Eligibility
     public function evaluate(array $record, $asOf = null)
     {
         $walmartSku = isset($record['walmart_sku']) ? (string)$record['walmart_sku'] : '';
-        $magentoSku = !empty($record['magento_sku']) ? (string)$record['magento_sku'] : $walmartSku;
+        $magentoSku = !empty($record['magento_sku']) ? (string)$record['magento_sku'] : null;
         $mappingType = isset($record['mapping_type']) ? (string)$record['mapping_type'] : 'unmatched';
+        if ($mappingType === 'unmatched') {
+            return $this->result(false, 0, null, 'Magento product does not exist.', null);
+        }
         if ($mappingType === 'ambiguous_option') {
             return $this->result(false, 0, $magentoSku, 'Custom-option SKU matches more than one Magento option.', null);
+        }
+        if ($magentoSku === null) {
+            return $this->result(false, 0, null, 'Magento mapping is incomplete.', null);
         }
         try {
             $product = $this->productRepository->get($magentoSku, false, null, true);

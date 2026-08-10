@@ -1,5 +1,42 @@
 # Stage 1 release notes
 
+## 1.6.13
+
+- Fixed the All, Unpublished, Errors, Drafts and Published tabs so the selected publication status is applied to the Magento UI grid.
+- Kept the selected tab compatible with other active grid filters such as Sync Enabled and Meltable.
+- This is an admin-grid filtering fix only; inventory calculations, Walmart writes and scheduled synchronization are unchanged.
+
+## 1.6.12
+
+- Replaced the unsafe 15-minute default with one daily scheduled run at `30 3 * * *`.
+- Added a whole-job file lock so overlapping catalog-refresh and inventory-sync runs are safely skipped.
+- Added an automatic catalog-shrink guard: if Walmart unexpectedly returns less than 80% of the existing local catalog, the refresh and all inventory writes stop for review.
+- Moved Magento product and custom-option matching outside the catalog write transaction to reduce database lock time.
+- Added catalog, inventory and total run durations to the scheduled-run log.
+- Retained the sequence introduced in 1.6.11: complete read-only catalog refresh, fresh inventory calculation, then eligible inventory writes.
+
+## 1.6.11
+
+- Every enabled scheduled inventory run now starts with a complete read-only Walmart catalog refresh.
+- The job automatically rebuilds local mappings and recalculates Magento quantity, meltable season, calculated Walmart quantity and SEND/SKIP action before inventory writes.
+- A failed or incomplete catalog refresh stops the run before any Walmart inventory is changed.
+- The dashboard shows the latest automatic catalog-refresh time and explains the scheduled sequence.
+- Routine operation no longer requires the client to refresh the complete catalog from a terminal.
+
+## 1.6.10
+
+- Fixed inventory preview so an unmatched Walmart SKU is no longer copied into the Magento SKU column. The Magento SKU now stays blank when no Magento product mapping exists.
+- Dashboard matched/unmatched totals now require a confirmed mapping type, product ID and Magento SKU instead of treating any non-empty fallback value as a match.
+- Running the inventory preview once after deployment cleans previously persisted fallback values from unmatched rows without contacting Walmart.
+
+## 1.6.9
+
+- Added guarded bulk scope `unpublished-meltable` for a one-time seasonal zero of unpublished Walmart SKUs that Magento has confirmed as meltable.
+- Excluded unmatched, ambiguous and unverified custom-option rows from this scope.
+- Added candidate-hash confirmation and an exact mandatory remote inventory backup before any write.
+- SKUs already at zero in the mandatory remote backup are skipped without an unnecessary Walmart write.
+- The scope does not enable synchronization and does not add unpublished SKUs to the normal scheduled inventory process.
+
 ## 1.6.8
 
 - Fixed unchanged custom-option mappings losing verification and sync approval after Magento product imports regenerated internal option IDs.

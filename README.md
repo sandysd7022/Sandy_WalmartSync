@@ -65,7 +65,7 @@ Open **Walmart Sync > Inventory Dashboard**. The page shows safety settings, inv
 
 - A link to the searchable SKU review grid.
 - Counts for matched, unmatched, unverified, sync-enabled, ready and meltable records.
-- Clear reminders that the complete catalog refresh is a server maintenance task.
+- The latest automatic catalog-refresh time and the guarded refresh/recalculate/sync sequence.
 
 The **Known Walmart SKUs** grid provides three guarded Admin actions:
 
@@ -79,7 +79,9 @@ These actions change Magento controls only and never call Walmart. Custom-option
 
 Sync enablement is intentionally managed from the SKU review grid rather than a duplicate product-edit toggle. The grid shows the effective stored value used by inventory preview and execution.
 
-The inventory cron recalculates and refreshes operational grid fields (Ready, reason, Magento quantity, meltable/seasonal result, calculated Walmart quantity, action, result/error and sync time) whenever it runs. It does not discover newly created Walmart listings or rebuild mappings; a complete `walmart:catalog:import` remains a developer/administrator maintenance task and should run before reviewing new catalog items.
+Every enabled scheduled run first downloads and validates the complete Walmart catalog, then rebuilds local mappings and recalculates the operational grid fields (Ready, reason, Magento quantity, meltable/seasonal result, calculated Walmart quantity and action) before sending eligible inventory. If the catalog response is incomplete or unexpectedly falls below 80% of the current local catalog, the scheduled run stops before any Walmart write. Routine operation therefore does not require a terminal catalog-refresh command.
+
+The safe default schedule is `30 3 * * *` (once daily). Keep this as a daily off-peak job after the Google Sheet inventory update; do not use a one-minute or 15-minute schedule for the complete catalog-plus-inventory sequence. A dedicated whole-job lock safely skips a run if an earlier Walmart run is still active.
 
 Return exemptions were rejected and no longer control inventory synchronization. Their statuses remain visible only as historical reference. Exemption request download/upload controls are intentionally removed from the normal client workflow.
 
@@ -98,6 +100,20 @@ php bin/magento walmart:inventory:zero --scope=published-unmatched --execute --c
 ```
 
 Execution creates another mandatory remote backup and aborts before any write if the backup is incomplete or the candidate set changed. It does not alter matched Magento products, ambiguous mappings, or unverified custom-option mappings.
+
+For a one-time zero of unpublished Walmart SKUs that Magento has confirmed as meltable, first run the complete inventory preview, then keep cron disabled and run:
+
+```bash
+php bin/magento walmart:inventory:zero --scope=unpublished-meltable
+```
+
+This guarded scope includes only `UNPUBLISHED` rows with a Magento product, current meltable classification, and a direct/product-attribute mapping or a verified custom-option mapping. Unmatched and ambiguous rows are excluded. After reviewing the complete SKU list and candidate hash, enable writes and execute:
+
+```bash
+php bin/magento walmart:inventory:zero --scope=unpublished-meltable --execute --confirm="ZERO-UNPUBLISHED-MELTABLE" --candidate-hash="<DRY-RUN-HASH>"
+```
+
+Execution backs up the exact candidate set from Walmart, aborts if any backup lookup fails, and avoids sending another update for remote quantities already at zero. This one-time operation does not enable normal synchronization for unpublished SKUs.
 
 ### Developer CLI workflow
 

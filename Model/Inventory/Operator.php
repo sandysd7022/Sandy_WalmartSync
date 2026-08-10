@@ -65,9 +65,13 @@ class Operator
 
     public function zero($sku = null, $limit = null, $execute = false, $scope = null, $expectedCandidateHash = null)
     {
-        $records = $scope === 'published-unmatched'
-            ? $this->storage->getPublishedUnmatched($limit)
-            : $this->storage->getAll($sku, $limit);
+        if ($scope === 'published-unmatched') {
+            $records = $this->storage->getPublishedUnmatched($limit);
+        } elseif ($scope === 'unpublished-meltable') {
+            $records = $this->storage->getUnpublishedMeltable($limit);
+        } else {
+            $records = $this->storage->getAll($sku, $limit);
+        }
         $candidateHash = $this->getCandidateHash($records);
         if (!$execute) {
             $results = [];
@@ -84,12 +88,14 @@ class Operator
         if (!$this->config->isWriteEnabled()) {
             throw new LocalizedException(__('Walmart write operations are disabled.'));
         }
-        if ($scope === 'published-unmatched' && (string)$expectedCandidateHash !== $candidateHash) {
+        if ($scope && (string)$expectedCandidateHash !== $candidateHash) {
             throw new LocalizedException(__('Candidate set changed or was not confirmed. Run the dry run again and provide its exact candidate hash.'));
         }
         $suffix = $scope === 'published-unmatched'
             ? 'published_unmatched'
-            : ($sku ? preg_replace('/[^A-Za-z0-9_.-]/', '_', $sku) : 'all');
+            : ($scope === 'unpublished-meltable'
+                ? 'unpublished_meltable'
+                : ($sku ? preg_replace('/[^A-Za-z0-9_.-]/', '_', $sku) : 'all'));
         $backup = $this->backup->executeRecords($records, $suffix, $scope);
         if ($backup['total'] === 0) {
             throw new LocalizedException(__('No local Walmart SKUs matched this operation. Import the catalog first.'));
@@ -105,6 +111,15 @@ class Operator
                 $previous = array_key_exists($recordSku, $backup['quantities'])
                     ? $backup['quantities'][$recordSku]
                     : $record['current_qty'];
+                if ($scope === 'unpublished-meltable' && $previous !== null && (float)$previous <= 0) {
+                    $results[] = [
+                        'walmart_sku' => $record['walmart_sku'],
+                        'previous_qty' => $previous,
+                        'new_qty' => 0,
+                        'status' => 'already_zero'
+                    ];
+                    continue;
+                }
                 $this->client->updateInventory($record['walmart_sku'], 0, $this->config->getShipNode());
                 $this->storage->updateStatus($record['walmart_sku'], [
                     'current_qty' => 0,

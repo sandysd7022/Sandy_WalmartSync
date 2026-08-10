@@ -53,13 +53,13 @@
                     <comment>Global safety gate for real Walmart inventory changes. Keep No until mappings, backup and complete preview are approved.</comment>
                 </field>
                 <field id="cron_enabled" translate="label comment" type="select" sortOrder="20" showInDefault="1">
-                    <label>Enable Inventory Cron</label>
+                    <label>Enable Automatic Catalog + Inventory Cron</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment>Runs inventory synchronization automatically on the schedule below. Writes still require Allow Walmart Write Operations = Yes.</comment>
+                    <comment>Runs the full automatic sequence: complete Walmart catalog refresh, mapping and quantity recalculation, then eligible inventory synchronization. Writes still require Allow Walmart Write Operations = Yes.</comment>
                 </field>
                 <field id="cron_expression" translate="label comment" type="text" sortOrder="30" showInDefault="1">
-                    <label>Inventory Cron Expression</label>
-                    <comment>Five-part cron schedule. Run after the daily Google Sheet has updated Magento (currently after 1 PM America/New_York).</comment>
+                    <label>Automatic Run Cron Expression</label>
+                    <comment>Five-part schedule for the complete automatic sequence. Run once daily after the Google Sheet update; do not schedule every minute.</comment>
                 </field>
             </group>
             <group id="seasonal" translate="label" type="text" sortOrder="30" showInDefault="1">

@@ -35,12 +35,17 @@ class Backup
 
     public function execute($sku = null, $limit = null, $scope = null)
     {
-        if ($scope === 'published-unmatched') {
+        if (in_array($scope, ['published-unmatched', 'unpublished-meltable'], true)) {
             if ($sku !== null && $sku !== '') {
-                throw new \InvalidArgumentException('The published-unmatched scope cannot be combined with --sku.');
+                throw new \InvalidArgumentException('A guarded scope cannot be combined with --sku.');
             }
-            $records = $this->storage->getPublishedUnmatched($limit);
-            return $this->executeRecords($records, 'published_unmatched', $scope);
+            $records = $scope === 'published-unmatched'
+                ? $this->storage->getPublishedUnmatched($limit)
+                : $this->storage->getUnpublishedMeltable($limit);
+            $suffix = $scope === 'published-unmatched'
+                ? 'published_unmatched'
+                : 'unpublished_meltable';
+            return $this->executeRecords($records, $suffix, $scope);
         }
         if ($scope !== null && $scope !== '') {
             throw new \InvalidArgumentException('Unknown inventory backup scope.');

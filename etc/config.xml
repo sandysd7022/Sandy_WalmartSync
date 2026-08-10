@@ -14,7 +14,7 @@
             <safety>
                 <write_enabled>0</write_enabled>
                 <cron_enabled>0</cron_enabled>
-                <cron_expression>*/15 * * * *</cron_expression>
+                <cron_expression>30 3 * * *</cron_expression>
             </safety>
             <seasonal>
                 <enabled>1</enabled>

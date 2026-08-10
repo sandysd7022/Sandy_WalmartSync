@@ -22,7 +22,7 @@ class InventoryBackupCommand extends Command
         $this->setName('walmart:inventory:backup')
             ->setDescription('Export current Walmart inventory before any write operation')
             ->addOption('sku', null, InputOption::VALUE_OPTIONAL, 'One Walmart SKU')
-            ->addOption('scope', null, InputOption::VALUE_OPTIONAL, 'Safe scope: published-unmatched')
+            ->addOption('scope', null, InputOption::VALUE_OPTIONAL, 'Safe scope: published-unmatched or unpublished-meltable')
             ->addOption('limit', null, InputOption::VALUE_OPTIONAL, 'Maximum records');
         parent::configure();
     }
@@ -30,8 +30,8 @@ class InventoryBackupCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $scope = $input->getOption('scope');
-        if ($scope && $scope !== 'published-unmatched') {
-            $output->writeln('<error>Unknown scope. Supported value: published-unmatched.</error>');
+        if ($scope && !in_array($scope, ['published-unmatched', 'unpublished-meltable'], true)) {
+            $output->writeln('<error>Unknown scope. Supported values: published-unmatched, unpublished-meltable.</error>');
             return 2;
         }
         if ($scope && $input->getOption('sku')) {
