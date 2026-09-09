@@ -19,6 +19,7 @@
             <seasonal>
                 <enabled>1</enabled>
                 <category_ids></category_ids>
+                <main_category_values>Chocolate,Chocolates,Chocolate Covered Sweets,Sugar Free Chocolate,Sugar-Free Chocolate,Nougat,Nougats,Marzipan</main_category_values>
                 <zero_start>05-01</zero_start>
                 <zero_end>11-30</zero_end>
                 <timezone>America/New_York</timezone>

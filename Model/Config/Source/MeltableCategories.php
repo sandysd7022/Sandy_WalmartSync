@@ -16,7 +16,8 @@ class MeltableCategories implements OptionSourceInterface
     public function toOptionArray()
     {
         $collection = $this->collectionFactory->create();
-        $collection->addAttributeToSelect('name')
+        $collection->addAttributeToSelect(['name', 'is_active'])
+            ->addAttributeToFilter('is_active', 1)
             ->addFieldToFilter('level', ['gt' => 0])
             ->setOrder('path', 'ASC');
 

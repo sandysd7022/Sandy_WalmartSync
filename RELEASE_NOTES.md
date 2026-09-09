@@ -1,5 +1,19 @@
 # Stage 1 release notes
 
+## 1.6.15
+
+- The **Meltable Magento Categories** selector now lists only active Magento categories.
+- A category that is later disabled is also ignored by automatic meltable classification, even if its old ID remains saved in configuration.
+- No Walmart write, inventory calculation, mapping, cron, or custom-option behavior was changed.
+
+## 1.6.14
+
+- Meltable detection now evaluates both the Magento `main_cat` attribute and every assigned Magento category.
+- Added configurable exact meltable `main_cat` values with safe defaults for Chocolate, Chocolate Covered Sweets, Nougat and Marzipan.
+- The broad `Collections` category/value is always ignored because it contains both meltable and non-meltable products.
+- Preserved the existing product override priority: Yes forces meltable, No forces non-meltable and Automatic evaluates both category sources.
+- Inventory writes, sync approvals, custom-option inheritance and seasonal dates are unchanged.
+
 ## 1.6.13
 
 - Fixed the All, Unpublished, Errors, Drafts and Published tabs so the selected publication status is applied to the Magento UI grid.

@@ -72,7 +72,11 @@
                 <field id="category_ids" translate="label comment" type="multiselect" sortOrder="20" showInDefault="1">
                     <label>Meltable Magento Categories</label>
                     <source_model>Sandy\WalmartSync\Model\Config\Source\MeltableCategories</source_model>
-                    <comment>Select Chocolates, Nougats, Marzipan and any future meltable categories. Products in child categories are included automatically.</comment>
+                    <comment>Only active Magento categories are listed. Select specific meltable categories such as Chocolates, Nougats and Marzipan. Products in child categories are included automatically. Collections is a mixed merchandising category and is always ignored.</comment>
+                </field>
+                <field id="main_category_values" translate="label comment" type="textarea" sortOrder="25" showInDefault="1">
+                    <label>Meltable main_cat Values</label>
+                    <comment>Comma- or line-separated exact values from the Magento main_cat attribute. Both main_cat and all assigned Magento categories are evaluated. Collections is always ignored.</comment>
                 </field>
                 <field id="zero_start" translate="label comment" type="text" sortOrder="30" showInDefault="1">
                     <label>Zero Period Starts</label>

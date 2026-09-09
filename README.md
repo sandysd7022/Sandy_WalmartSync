@@ -46,7 +46,7 @@ Seller Center access alone does not provide API credentials. Obtain the seller's
 
 Under **Meltable Seasonal Inventory**, enable the restriction and select the Magento categories Chocolates, Nougats, Marzipan and any future meltable categories. Category IDs are stored, so renaming a category does not break the rule. Products assigned to child categories are included.
 
-The defaults force calculated Walmart inventory to zero from `05-01` through `11-30` in `America/New_York`. From December 1 through April 30, the latest Magento quantity is used. The product attribute **Meltable Product Override** can force Yes or No for individual exceptions; Automatic follows category configuration. Custom-option Walmart SKUs inherit the parent product result.
+The defaults force calculated Walmart inventory to zero from `05-01` through `11-30` in `America/New_York`. From December 1 through April 30, the latest Magento quantity is used. Automatic detection reads both the product's `main_cat` attribute and every assigned Magento category. The mixed **Collections** category is always ignored. The product attribute **Meltable Product Override** can force Yes or No for individual exceptions; Automatic follows both configured category sources. Custom-option Walmart SKUs inherit the parent product result.
 
 Test both seasons without changing the server clock:
 

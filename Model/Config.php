@@ -92,6 +92,21 @@ class Config
         return array_values(array_unique($ids));
     }
 
+    public function getMeltableMainCategoryValues()
+    {
+        $value = (string)$this->scopeConfig->getValue(self::XML_PATH . 'seasonal/main_category_values');
+        $values = preg_split('/[\r\n,;|]+/', $value, -1, PREG_SPLIT_NO_EMPTY);
+        $normalized = [];
+        foreach ((array)$values as $item) {
+            $item = strtolower(trim((string)$item));
+            $item = preg_replace('/\s+/', ' ', $item);
+            if ($item !== '' && $item !== 'collection' && $item !== 'collections') {
+                $normalized[$item] = $item;
+            }
+        }
+        return array_values($normalized);
+    }
+
     public function getMeltableZeroStart()
     {
         return $this->normalizeMonthDay(
