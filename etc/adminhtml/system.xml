@@ -45,12 +45,43 @@
                     <comment>Quantity subtracted from Magento stock before sending. Use 0 because Walmart option SKUs must receive the same quantity as their Magento parent.</comment>
                 </field>
             </group>
+            <group id="new_items" translate="label" type="text" sortOrder="25" showInDefault="1">
+                <label>New Collection Items</label>
+                <field id="category_id" translate="label comment" type="text" sortOrder="10" showInDefault="1">
+                    <label>Magento Collections Category ID</label>
+                    <validate>validate-number validate-greater-than-zero</validate>
+                    <comment>Only enabled simple products directly assigned to this category are discovered. Current approved scope: category 273.</comment>
+                </field>
+                <field id="hold_start_date" translate="label comment" type="text" sortOrder="20" showInDefault="1">
+                    <label>Unpublished Hold Start Date (UTC)</label>
+                    <comment>New items are created with this future Walmart startDate and remain unpublished for review. Use YYYY-MM-DDTHH:MM:SSZ. Default: 2099-12-31T00:00:00Z.</comment>
+                </field>
+                <field id="hold_end_date" translate="label comment" type="text" sortOrder="25" showInDefault="1">
+                    <label>Unpublished Hold End Date (UTC)</label>
+                    <comment>Must be later than the hold start date. Use YYYY-MM-DDTHH:MM:SSZ. Default: 2099-12-31T23:59:59Z.</comment>
+                </field>
+                <field id="catalog_max_age_hours" translate="label comment" type="text" sortOrder="30" showInDefault="1">
+                    <label>Maximum Walmart Catalog Import Age (Hours)</label>
+                    <validate>validate-number validate-greater-than-zero</validate>
+                    <comment>Candidate discovery stops when the imported Walmart catalog is missing or older than this limit. Refresh the Walmart catalog first. Default: 24.</comment>
+                </field>
+            </group>
             <group id="safety" translate="label" type="text" sortOrder="20" showInDefault="1">
                 <label>Safety Controls</label>
                 <field id="write_enabled" translate="label comment" type="select" sortOrder="10" showInDefault="1">
                     <label>Allow Walmart Write Operations</label>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                    <comment>Global safety gate for real Walmart inventory changes. Keep No until mappings, backup and complete preview are approved.</comment>
+                    <comment>Global safety gate for every Walmart write. Inventory and item-feed writes also have their own additional controls.</comment>
+                </field>
+                <field id="item_feed_enabled" translate="label comment" type="select" sortOrder="15" showInDefault="1">
+                    <label>Allow New Item Feed Submission</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <comment>Separate safety gate for Walmart MP_ITEM and MP_ITEM_MATCH feeds. Keep No except during an approved, hash-confirmed CLI submission.</comment>
+                </field>
+                <field id="item_feed_max_items" translate="label comment" type="text" sortOrder="16" showInDefault="1">
+                    <label>Maximum Items Per Submitted Feed</label>
+                    <validate>validate-number validate-greater-than-zero</validate>
+                    <comment>Hard local batch limit for new-item feeds. Start with 1 on staging and 25 or fewer in production.</comment>
                 </field>
                 <field id="cron_enabled" translate="label comment" type="select" sortOrder="20" showInDefault="1">
                     <label>Enable Automatic Catalog + Inventory Cron</label>

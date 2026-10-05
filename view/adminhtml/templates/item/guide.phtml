@@ -1,0 +1,27 @@
+<div class="message message-notice">
+    <div>
+        <strong><?= $block->escapeHtml(__('Guarded new-item workflow')) ?></strong><br/>
+        <?= $block->escapeHtml(__('1. Refresh candidates. 2. Validate selected rows (local only). 3. Review errors and the stored hash. 4. Submit as Unpublished. 5. Refresh feed status. 6. Only after client approval, Publish Selected. Only enabled simple products in the configured Collections category are discovered; unsupported main_cat values are blocked.')) ?>
+    </div>
+</div>
+<div class="walmart-creation-legend" aria-label="<?= $block->escapeHtmlAttr(__('Creation status color legend')) ?>">
+    <span class="walmart-creation-legend__item"><span class="walmart-creation-legend__swatch walmart-creation-legend__swatch--error" aria-hidden="true"></span><?= $block->escapeHtml(__('Blocked / Failed')) ?></span>
+    <span class="walmart-creation-legend__item"><span class="walmart-creation-legend__swatch walmart-creation-legend__swatch--success" aria-hidden="true"></span><?= $block->escapeHtml(__('Created Successfully')) ?></span>
+    <span class="walmart-creation-legend__item"><span class="walmart-creation-legend__swatch walmart-creation-legend__swatch--ready" aria-hidden="true"></span><?= $block->escapeHtml(__('Validated / Ready')) ?></span>
+    <span class="walmart-creation-legend__item"><span class="walmart-creation-legend__swatch walmart-creation-legend__swatch--pending" aria-hidden="true"></span><?= $block->escapeHtml(__('Candidate')) ?></span>
+    <span class="walmart-creation-legend__item"><span class="walmart-creation-legend__swatch walmart-creation-legend__swatch--processing" aria-hidden="true"></span><?= $block->escapeHtml(__('Submitted / Processing')) ?></span>
+    <span class="walmart-creation-legend__item"><span class="walmart-creation-legend__swatch walmart-creation-legend__swatch--existing" aria-hidden="true"></span><?= $block->escapeHtml(__('Already Exists')) ?></span>
+</div>
+<form method="post" action="<?= $block->escapeUrl($block->getUrl('sandy_walmartsync/item/refreshCandidates')) ?>" style="margin: 0 0 2rem;">
+    <?= $block->getBlockHtml('formkey') ?>
+    <button type="submit" class="action-default scalable primary">
+        <span><?= $block->escapeHtml(__('Refresh Collection Candidates (Local Only)')) ?></span>
+    </button>
+</form>
+<script type="text/x-magento-init">
+{
+    "*": {
+        "Sandy_WalmartSync/js/grid-attention": {}
+    }
+}
+</script>

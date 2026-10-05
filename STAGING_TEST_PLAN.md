@@ -3,6 +3,7 @@
 ## Preconditions
 
 - Confirm Magento is exactly 2.3.4 and PHP is 7.1, 7.2, or 7.3.
+- Confirm the Magento CLI PHP has GD enabled: `php -m | grep -i '^gd$'`.
 - Take code and database backups.
 - Confirm whether the account is seller-fulfilled, WFS, or mixed.
 - Confirm the default ship node.
@@ -21,6 +22,20 @@ php bin/magento list | grep walmart
 ```
 
 Verify that the two new database tables exist and that the Walmart Sync product attributes appear on a test product.
+
+Confirm **Ingredients** appears in the product's Walmart Sync attribute group. If a custom attribute set does not show it, assign the `ingredients` attribute to that set before testing.
+
+## Read-only new-item generation test
+
+Keep **Allow Walmart Write Operations** and **Allow New Item Feed Submission** set to **No**. On one simple Gummy Candy product, save factual package text in **Ingredients**. Run the generator with the other required arguments documented in README.
+
+Verify that:
+
+- A JSON file is created under `var/export/walmart_sync/`.
+- A readable PNG is created under `pub/media/walmart/ingredient-labels/` and its printed URL opens without an admin login.
+- The JSON contains `ingredients` and `ingredientListImage`.
+- No Walmart API call occurs.
+- Clearing **Ingredients** and rerunning with a new output filename produces an exclusion error before a JSON file or Walmart request is made.
 
 ## Read-only phase
 
@@ -63,8 +78,8 @@ Confirm Mapping Verified = Yes, Sync Enabled = Yes and that SEND/SKIP, meltable 
 Keep every product disabled except the approved staging canaries. Set **Allow Walmart Write Operations = Yes**, **Enable Inventory Cron = Yes**, and temporarily set the expression to `* * * * *`. Run Magento cron twice at least one minute apart:
 
 ```bash
-php bin/magento cron:run --group=default
-php bin/magento cron:run --group=default
+php bin/magento cron:run --group=wm_sync
+php bin/magento cron:run --group=wm_sync
 ```
 
 Verify `sandy_walmartsync_inventory` in `cron_schedule`, then check the grid Last Result, Last Error and Last Sync Time. After the test, immediately set cron and write operations back to No. The inventory cron refreshes calculated grid state, but new Walmart catalog records still require the read-only catalog import maintenance command.
@@ -121,3 +136,15 @@ php bin/magento walmart:inventory:zero --execute --confirm="ZERO-ALL"
 ```
 
 Restore is always a separate operation after eligibility review.
+# Version 1.8.0 new Collection-item staging test
+
+1. Keep **Allow Walmart Write Operations** and **Allow New Item Feed Submission** set to **No**.
+2. Run `php bin/magento setup:upgrade`, compile if production mode requires it, and clear configuration/layout caches.
+3. Run a complete `php bin/magento walmart:catalog:import`; discovery intentionally refuses a missing or stale catalog.
+4. Prepare one enabled simple product directly in Magento category ID 273 with `main_cat = Gummies` and all required Walmart attributes documented in the README.
+5. Open **Walmart Sync > New Walmart Items** and click **Refresh Collection Candidates**. Confirm the test SKU is a candidate and existing/unsupported SKUs are blocked.
+6. Select only the test SKU and choose **Validate Selected**. Confirm `Validation = valid`, a payload hash exists, and no Walmart feed ID exists.
+7. Review the product data and generated ingredient-label URL. Set **Maximum Items Per Submitted Feed** to `1`.
+8. After approval, temporarily enable both Walmart write switches and choose **Submit Selected as Unpublished**. Immediately disable both switches again.
+9. Use **Refresh Selected Feed Status** until creation is `success`. Verify in Seller Center that the item exists and is unpublished with a future start-date reason. Do not enable inventory sync yet.
+10. Only after client approval, re-enable both write switches, choose **Publish Selected After Review**, and disable the switches again. Refresh status until `publish_accepted`, then independently verify the published status in Seller Center/catalog import before enabling inventory.

@@ -15,6 +15,9 @@
                 <item name="walmart_inventory_preview" xsi:type="object">Sandy\WalmartSync\Console\Command\InventoryPreviewCommand</item>
                 <item name="walmart_inventory_zero" xsi:type="object">Sandy\WalmartSync\Console\Command\InventoryZeroCommand</item>
                 <item name="walmart_inventory_sync" xsi:type="object">Sandy\WalmartSync\Console\Command\InventorySyncCommand</item>
+                <item name="walmart_item_feed" xsi:type="object">Sandy\WalmartSync\Console\Command\ItemFeedCommand</item>
+                <item name="walmart_item_feed_generate_simple" xsi:type="object">Sandy\WalmartSync\Console\Command\ItemFeedGenerateCommand</item>
+                <item name="walmart_item_feed_status" xsi:type="object">Sandy\WalmartSync\Console\Command\ItemFeedStatusCommand</item>
             </argument>
         </arguments>
     </type>
@@ -24,10 +27,18 @@
             <argument name="resourceModel" xsi:type="string">Sandy\WalmartSync\Model\ResourceModel\WalmartSku</argument>
         </arguments>
     </type>
+    <type name="Sandy\WalmartSync\Model\ResourceModel\ItemCandidate\Grid\Collection">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">sandy_walmartsync_item_candidate</argument>
+            <argument name="resourceModel" xsi:type="string">Sandy\WalmartSync\Model\ResourceModel\ItemCandidate</argument>
+            <argument name="identifierName" xsi:type="string">entity_id</argument>
+        </arguments>
+    </type>
     <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
         <arguments>
             <argument name="collections" xsi:type="array">
                 <item name="sandy_walmartsync_sku_listing_data_source" xsi:type="string">Sandy\WalmartSync\Model\ResourceModel\WalmartSku\Grid\Collection</item>
+                <item name="sandy_walmartsync_item_listing_data_source" xsi:type="string">Sandy\WalmartSync\Model\ResourceModel\ItemCandidate\Grid\Collection</item>
             </argument>
         </arguments>
     </type>

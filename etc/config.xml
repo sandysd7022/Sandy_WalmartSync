@@ -13,6 +13,8 @@
             </general>
             <safety>
                 <write_enabled>0</write_enabled>
+                <item_feed_enabled>0</item_feed_enabled>
+                <item_feed_max_items>25</item_feed_max_items>
                 <cron_enabled>0</cron_enabled>
                 <cron_expression>30 3 * * *</cron_expression>
             </safety>
@@ -24,6 +26,12 @@
                 <zero_end>11-30</zero_end>
                 <timezone>America/New_York</timezone>
             </seasonal>
+            <new_items>
+                <category_id>273</category_id>
+                <hold_start_date>2099-12-31T00:00:00Z</hold_start_date>
+                <hold_end_date>2099-12-31T23:59:59Z</hold_end_date>
+                <catalog_max_age_hours>24</catalog_max_age_hours>
+            </new_items>
         </sandy_walmartsync>
     </default>
 </config>

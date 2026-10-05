@@ -1,5 +1,120 @@
 # Stage 1 release notes
 
+## 1.8.9
+
+- Added accessible color coding to the New Walmart Items grid Creation Status column while retaining every text status.
+- Blocked/failed is red, success is green, validated is teal, candidate is amber, submitted/in-progress is blue, already-existing is gray-blue, and unknown states are neutral gray.
+- Added a visible status legend and explanatory hover text so administrators can quickly identify the next safe workflow action.
+- This is an admin presentation change only; it does not validate, submit, publish or otherwise call Walmart.
+
+## 1.8.8
+
+- Added report-backed mappings for `main_cat = Marshmallow` to Walmart `Marshmallows` and `main_cat = Licorice` to Walmart `Licorice Candy`; `Gummies` continues to map to `Gummy Candy`.
+- Added strict name/description cross-checking. A conflicting or missing category signal blocks local validation and explains which `main_cat` must be corrected.
+- Salty Licorice/Salmiak takes precedence over Marshmallow, matching published Walmart SKU SD0922. Strawberry Marshmallow SKU SD0911 maps to Walmart `Marshmallows`.
+- Stores and displays the reviewed Walmart category `Food & Beverages` in the candidate grid. Category and type remain part of the guarded local payload review before any API write.
+
+## 1.8.7
+
+- Replaced the fixed `foodForm = Pieces` value with guarded product-name resolution for Gummy Candy candidates.
+- Recognizes gumdrops, gummy bears, gummy worms/crawlers, gummy rings, fruit slices, jelly beans, belts, strings/laces, sticks, chews, bites, drops and generic gummies.
+- Unclear names are blocked during local validation instead of receiving an invented form. The resolved Food Form is stored and displayed in the review grid.
+- The one-SKU CLI command derives Food Form from the Magento product name unless `--food-form` is explicitly supplied.
+
+## 1.8.6
+
+- Fixed Walmart's `Site End Date must be greater than Site Start Date` rejection for held-unpublished item creation.
+- Held payloads now include both the configured future `startDate` and a later `endDate` (default `2099-12-31T23:59:59Z`).
+- Added configuration and local validation for the hold end date, so a missing, malformed or non-later date is blocked before calling Walmart.
+- The publish action retains the far-future end date while moving the start date to the current UTC time.
+
+## 1.8.5
+
+- Added guarded automatic flavor resolution for Gummy Candy candidates.
+- Resolution order is explicit `walmart_flavor`, an existing Magento `flavor` attribute, then recognized flavor words in Product Name and Short Description.
+- Uses `Assorted` only when multiple flavors are found or the source explicitly says assorted, mix, variety or multi-flavor.
+- Unclear products remain blocked instead of receiving a guessed value. The resolved value is displayed in the grid after validation.
+
+## 1.8.4
+
+- Manual `walmart_feature_1`, `walmart_feature_2` and `walmart_feature_3` entry is no longer required for the New Walmart Items grid workflow.
+- Feature 1 uses the explicit override when present, otherwise Magento Short Description, then Product Name.
+- Feature 2 uses the explicit override when present, otherwise Magento Description, then Brand plus Product Name.
+- Feature 3 uses the explicit override when present, otherwise a factual summary of `package_qty` and `total_package_weight`.
+- Derived feature text is stripped of HTML, normalized and limited to 300 characters. Explicit feature attributes remain optional overrides.
+
+## 1.8.3
+
+- New-item discovery and validation now use the requested Magento source attributes: `jet_brand` for Brand, `package_qty` for Package Qty, and `total_package_weight` for Per Package Weight/net content.
+- Brand is passed explicitly as both Walmart brand and manufacturer; a blank `jet_brand` blocks only that candidate.
+- Added the three source values to the New Walmart Items grid for review before submission.
+- Existing item-feed safety gates, unpublished hold, reviewed payload hash and manual publication workflow are unchanged.
+
+## 1.8.2
+
+- Fixed the remaining Magento 2.3 selected-row SQL error in the controller-side candidate collection.
+- Explicitly sets `entity_id` on both the UI grid collection and the resource collection consumed by `Magento\Ui\Component\MassAction\Filter`.
+- No Walmart API, payload, catalog-discovery or eligibility behavior changed.
+
+## 1.8.1
+
+- Fixed the New Walmart Items mass-action SQL error caused by an undeclared grid identifier.
+- The candidate grid now explicitly identifies `entity_id`, so Magento correctly filters selected rows instead of generating an empty column name in the `WHERE` clause.
+- This fix changes only local admin-grid selection. It does not submit data to Walmart or alter candidate eligibility rules.
+
+## 1.8.0
+
+- Added a separate **New Walmart Items** admin grid for enabled simple Magento products directly assigned to the configured Collections category (default ID 273).
+- Discovery requires a recent complete Walmart catalog import and excludes SKUs already present in that import or products already carrying a Walmart Item ID.
+- Uses `main_cat` as the Walmart type discriminator. This first staging release supports only `Gummies` to the already-tested Walmart `Gummy Candy` schema; every other value is displayed as blocked instead of being guessed.
+- Added local-only validation and exact payload/hash storage. Validation requires UPC/EAN/GTIN, price, weight, brand, country, description, main image, ingredients, flavor, three key features, package quantity and package weight.
+- New items are submitted with a configurable future `startDate` (default `2099-12-31T00:00:00Z`) so Walmart holds them unpublished for review.
+- Added separate grid actions to refresh feed status and, only after a successful held creation, publish selected reviewed items by resubmitting the stored payload with `startDate` changed to the current UTC time.
+- New-item discovery and validation never call Walmart. Both global Walmart writes and the separate item-feed gate remain required for create and publish submissions. New-item creation is not added to cron.
+
+## 1.7.6
+
+- Removed the unsupported `specProductType` field from `Orderable` after Walmart returned `EXT_DATA_ERROR_60670554076755` for the live MP_ITEM canary.
+- The product type remains correctly represented by the single `Visible` product-type object (`Gummy Candy`), matching Walmart's schema.
+- Updated local preview validation to derive the product type from `Visible` and reject ambiguous multi-type payloads.
+
+## 1.7.5
+
+- Request `includeDetails=true` with paging parameters when checking a Walmart feed so failed item ingestion errors are returned instead of an empty detail list.
+- Feed-status checks remain read-only and do not resubmit or modify any Walmart item.
+
+## 1.7.4
+
+- Accept Walmart processing feed IDs containing `@`, matching the identifier returned by a successful item-feed submission.
+- Retain path safety by limiting feed IDs to 200 allowed characters and URL-encoding the identifier before the read-only status request.
+- No catalog, item, inventory, cron, or write behavior changed.
+
+## 1.7.3
+
+- Added the visible global product attribute `ingredients` under the Walmart Sync group when that attribute does not already exist, for manual entry or Magento CSV import.
+- New Gummy Candy item generation now requires actual ingredient text and excludes only the affected SKU when it is missing.
+- Automatically creates a versioned public PNG ingredient label under `pub/media/walmart/ingredient-labels/`; a real public ingredient-image URL can still override it.
+- Adds ingredient text to the Walmart payload and validates Walmart's 5,000-character limit before preview or submission.
+- Item creation remains manual, one SKU at a time, preview-first, and separate from inventory synchronization and cron.
+- If draft 1.7.2 was installed, its obsolete Walmart-specific ingredient and allergen attributes are hidden without deleting stored data.
+
+## 1.7.1
+
+- Added `walmart:item:generate-simple` to build a one-SKU Walmart `Gummy Candy` `MP_ITEM` JSON file from a Magento simple product.
+- The generator includes Walmart's required orderable and visible fields, requires three factual features and a public ingredient-label image, and never includes Magento custom options or Walmart variant fields.
+- Corrected item-feed submission to use Walmart's required multipart file upload while leaving all inventory API requests unchanged.
+- Generation and preview remain read-only. Item submission still requires both write switches, the explicit confirmation phrase and the exact preview hash.
+- Inventory quantity remains a separate operation after successful feed ingestion, catalog refresh, mapping review and sync enablement.
+
+## 1.7.0
+
+- Added `walmart:item:feed` for local validation and hash-confirmed submission of Walmart `MP_ITEM` and `MP_ITEM_MATCH` JSON feeds.
+- Added `walmart:item:feed:status` for read-only processing-status checks.
+- Added a separate **Allow New Item Feed Submission** safety switch, disabled by default, plus a configurable local maximum of 25 items.
+- Prevented automatic retries for feed POST requests to avoid duplicate submissions after ambiguous network timeouts.
+- Kept catalog import, inventory calculations, inventory cron, meltable rules and all existing commands unchanged.
+- Item creation is not included in cron. Newly accepted items must be confirmed through feed status and catalog import before inventory sync is enabled.
+
 ## 1.6.15
 
 - The **Meltable Magento Categories** selector now lists only active Magento categories.

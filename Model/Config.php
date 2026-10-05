@@ -32,6 +32,45 @@ class Config
         return $this->isWriteEnabled() && $this->scopeConfig->isSetFlag(self::XML_PATH . 'safety/cron_enabled');
     }
 
+    public function isItemFeedWriteEnabled()
+    {
+        return $this->isWriteEnabled()
+            && $this->scopeConfig->isSetFlag(self::XML_PATH . 'safety/item_feed_enabled');
+    }
+
+    public function getItemFeedMaxItems()
+    {
+        return max(1, min(100, (int)$this->scopeConfig->getValue(
+            self::XML_PATH . 'safety/item_feed_max_items'
+        )));
+    }
+
+    public function getNewItemCategoryId()
+    {
+        return max(1, (int)$this->scopeConfig->getValue(self::XML_PATH . 'new_items/category_id'));
+    }
+
+    public function getNewItemHoldStartDate()
+    {
+        $value = trim((string)$this->scopeConfig->getValue(self::XML_PATH . 'new_items/hold_start_date'));
+        return preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $value)
+            ? $value
+            : '2099-12-31T00:00:00Z';
+    }
+
+    public function getNewItemHoldEndDate()
+    {
+        $value = trim((string)$this->scopeConfig->getValue(self::XML_PATH . 'new_items/hold_end_date'));
+        return preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/', $value)
+            ? $value
+            : '2099-12-31T23:59:59Z';
+    }
+
+    public function getNewItemCatalogMaxAgeHours()
+    {
+        return max(1, min(168, (int)$this->scopeConfig->getValue(self::XML_PATH . 'new_items/catalog_max_age_hours')));
+    }
+
     public function getBaseUrl()
     {
         if ($this->isSandbox()) {

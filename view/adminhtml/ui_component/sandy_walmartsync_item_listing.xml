@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<listing xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <argument name="data" xsi:type="array">
+        <item name="js_config" xsi:type="array">
+            <item name="provider" xsi:type="string">sandy_walmartsync_item_listing.sandy_walmartsync_item_listing_data_source</item>
+            <item name="deps" xsi:type="string">sandy_walmartsync_item_listing.sandy_walmartsync_item_listing_data_source</item>
+        </item>
+        <item name="spinner" xsi:type="string">item_candidate_columns</item>
+    </argument>
+    <dataSource name="sandy_walmartsync_item_listing_data_source">
+        <argument name="dataProvider" xsi:type="configurableObject">
+            <argument name="class" xsi:type="string">Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider</argument>
+            <argument name="name" xsi:type="string">sandy_walmartsync_item_listing_data_source</argument>
+            <argument name="primaryFieldName" xsi:type="string">entity_id</argument>
+            <argument name="requestFieldName" xsi:type="string">id</argument>
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="component" xsi:type="string">Magento_Ui/js/grid/provider</item>
+                    <item name="update_url" xsi:type="url" path="mui/index/render"/>
+                    <item name="storageConfig" xsi:type="array"><item name="indexField" xsi:type="string">entity_id</item></item>
+                </item>
+            </argument>
+        </argument>
+    </dataSource>
+    <listingToolbar name="listing_top">
+        <bookmark name="bookmarks"/><columnsControls name="columns_controls"/><filters name="listing_filters"/>
+        <massaction name="listing_massaction">
+            <action name="validate"><settings><type>validate</type><label translate="true">1. Validate Selected (No API Write)</label><url path="sandy_walmartsync/item/massValidate"/><confirm><title translate="true">Validate selected candidates?</title><message translate="true">This generates and stores exact review payloads and ingredient images locally. It does not contact Walmart.</message></confirm></settings></action>
+            <action name="submit"><settings><type>submit</type><label translate="true">2. Submit Selected as Unpublished</label><url path="sandy_walmartsync/item/massSubmit"/><confirm><title translate="true">Create selected items on Walmart as unpublished?</title><message translate="true">This is a Walmart write. Only previously validated payloads are submitted, with the configured future start date. Both Walmart write safety gates must be enabled.</message></confirm></settings></action>
+            <action name="status"><settings><type>status</type><label translate="true">3. Refresh Selected Feed Status</label><url path="sandy_walmartsync/item/massRefreshStatus"/><confirm><title translate="true">Refresh feed status?</title><message translate="true">This is a read-only Walmart API request.</message></confirm></settings></action>
+            <action name="publish"><settings><type>publish</type><label translate="true">4. Publish Selected After Review</label><url path="sandy_walmartsync/item/massPublish"/><confirm><title translate="true">Publish selected reviewed items?</title><message translate="true">This removes the future hold by submitting the exact reviewed payload with startDate set to now. This is a Walmart write and cannot be treated as a preview.</message></confirm></settings></action>
+        </massaction>
+        <paging name="listing_paging"/>
+    </listingToolbar>
+    <columns name="item_candidate_columns">
+        <selectionsColumn name="ids"><settings><indexField>entity_id</indexField></settings></selectionsColumn>
+        <column name="magento_sku"><settings><filter>text</filter><label translate="true">Magento SKU</label></settings></column>
+        <column name="walmart_sku"><settings><filter>text</filter><label translate="true">Walmart SKU</label></settings></column>
+        <column name="product_name"><settings><filter>text</filter><label translate="true">Product</label></settings></column>
+        <column name="main_category"><settings><filter>text</filter><label translate="true">Main Category</label></settings></column>
+        <column name="walmart_product_type"><settings><filter>text</filter><label translate="true">Walmart Product Type</label></settings></column>
+        <column name="walmart_category"><settings><filter>text</filter><label translate="true">Walmart Category</label></settings></column>
+        <column name="brand"><settings><filter>text</filter><label translate="true">Brand (jet_brand)</label></settings></column>
+        <column name="package_qty"><settings><filter>text</filter><label translate="true">Package Qty</label></settings></column>
+        <column name="total_package_weight"><settings><filter>text</filter><label translate="true">Per Package Weight</label></settings></column>
+        <column name="flavor"><settings><filter>text</filter><label translate="true">Resolved Flavor</label></settings></column>
+        <column name="food_form"><settings><filter>text</filter><label translate="true">Resolved Food Form</label></settings></column>
+        <column name="in_scope" component="Magento_Ui/js/grid/columns/select"><settings><options class="Magento\Config\Model\Config\Source\Yesno"/><filter>select</filter><dataType>select</dataType><label translate="true">Enabled + In Collections</label></settings></column>
+        <column name="already_in_walmart" component="Magento_Ui/js/grid/columns/select"><settings><options class="Magento\Config\Model\Config\Source\Yesno"/><filter>select</filter><dataType>select</dataType><label translate="true">Already in Walmart Import</label></settings></column>
+        <column name="validation_status"><settings><filter>text</filter><label translate="true">Validation</label></settings></column>
+        <column name="validation_error"><settings><filter>text</filter><label translate="true">Validation Error</label></settings></column>
+        <column name="payload_hash"><settings><filter>text</filter><visible>false</visible><label translate="true">Reviewed Payload Hash</label></settings></column>
+        <column name="ingredient_image_url"><settings><filter>text</filter><visible>false</visible><label translate="true">Ingredient Image URL</label></settings></column>
+        <column name="creation_status"><settings><filter>text</filter><label translate="true">Creation Status</label></settings></column>
+        <column name="creation_feed_id"><settings><filter>text</filter><label translate="true">Creation Feed ID</label></settings></column>
+        <column name="publish_status"><settings><filter>text</filter><label translate="true">Publish Status</label></settings></column>
+        <column name="publish_feed_id"><settings><filter>text</filter><label translate="true">Publish Feed ID</label></settings></column>
+        <column name="item_id"><settings><filter>text</filter><label translate="true">Walmart Item ID</label></settings></column>
+        <column name="wpid"><settings><filter>text</filter><visible>false</visible><label translate="true">WPID</label></settings></column>
+        <column name="last_error"><settings><filter>text</filter><label translate="true">Last Walmart Error</label></settings></column>
+        <column name="updated_at" class="Magento\Ui\Component\Listing\Columns\Date"><settings><filter>dateRange</filter><dataType>date</dataType><label translate="true">Updated</label></settings></column>
+    </columns>
+</listing>

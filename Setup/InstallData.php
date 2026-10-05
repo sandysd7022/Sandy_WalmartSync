@@ -63,6 +63,29 @@ class InstallData implements InstallDataInterface
             'walmart_last_error' => [
                 'type' => 'text', 'label' => 'Walmart Last Error', 'input' => 'textarea',
                 'required' => false, 'sort_order' => 70, 'visible' => false
+            ],
+            'ingredients' => [
+                'type' => 'text', 'label' => 'Ingredients', 'input' => 'textarea',
+                'required' => false, 'sort_order' => 80,
+                'used_in_product_listing' => false,
+                'note' => 'Enter the complete ingredient statement exactly as printed on the package. Required before creating a new Walmart food item.'
+            ],
+            'walmart_flavor' => [
+                'type' => 'varchar', 'label' => 'Walmart Flavor', 'input' => 'text',
+                'required' => false, 'sort_order' => 90,
+                'note' => 'Required for reviewed creation of Collection products mapped to Walmart Gummy Candy.'
+            ],
+            'walmart_feature_1' => [
+                'type' => 'text', 'label' => 'Walmart Key Feature 1', 'input' => 'textarea',
+                'required' => false, 'sort_order' => 100
+            ],
+            'walmart_feature_2' => [
+                'type' => 'text', 'label' => 'Walmart Key Feature 2', 'input' => 'textarea',
+                'required' => false, 'sort_order' => 110
+            ],
+            'walmart_feature_3' => [
+                'type' => 'text', 'label' => 'Walmart Key Feature 3', 'input' => 'textarea',
+                'required' => false, 'sort_order' => 120
             ]
         ];
         foreach ($attributes as $code => $data) {
@@ -70,7 +93,9 @@ class InstallData implements InstallDataInterface
             $data['global'] = \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_GLOBAL;
             $data['visible'] = isset($data['visible']) ? $data['visible'] : true;
             $data['user_defined'] = true;
-            $data['used_in_product_listing'] = true;
+            $data['used_in_product_listing'] = isset($data['used_in_product_listing'])
+                ? $data['used_in_product_listing']
+                : true;
             $eavSetup->addAttribute(Product::ENTITY, $code, $data);
         }
         $setup->endSetup();

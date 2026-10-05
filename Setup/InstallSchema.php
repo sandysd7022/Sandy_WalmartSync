@@ -62,6 +62,44 @@ class InstallSchema implements InstallSchemaInterface
             ->addIndex($installer->getIdxName('sandy_walmartsync_log', ['action', 'status']), ['action', 'status']);
         $installer->getConnection()->createTable($logTable);
 
+        $candidateTable = $installer->getConnection()->newTable($installer->getTable('sandy_walmartsync_item_candidate'))
+            ->addColumn('entity_id', Table::TYPE_INTEGER, null, ['identity' => true, 'unsigned' => true, 'nullable' => false, 'primary' => true], 'ID')
+            ->addColumn('product_id', Table::TYPE_INTEGER, null, ['unsigned' => true, 'nullable' => false], 'Magento Product ID')
+            ->addColumn('magento_sku', Table::TYPE_TEXT, 255, ['nullable' => false], 'Magento SKU')
+            ->addColumn('walmart_sku', Table::TYPE_TEXT, 255, ['nullable' => false], 'Walmart SKU')
+            ->addColumn('product_name', Table::TYPE_TEXT, 512, [], 'Product Name')
+            ->addColumn('main_category', Table::TYPE_TEXT, 255, [], 'Magento Main Category')
+            ->addColumn('walmart_product_type', Table::TYPE_TEXT, 255, [], 'Walmart Product Type')
+            ->addColumn('walmart_category', Table::TYPE_TEXT, 255, [], 'Walmart Product Category')
+            ->addColumn('brand', Table::TYPE_TEXT, 255, [], 'Magento jet_brand')
+            ->addColumn('package_qty', Table::TYPE_TEXT, 64, [], 'Magento package_qty')
+            ->addColumn('total_package_weight', Table::TYPE_TEXT, 64, [], 'Magento total_package_weight')
+            ->addColumn('flavor', Table::TYPE_TEXT, 255, [], 'Resolved Walmart Flavor')
+            ->addColumn('food_form', Table::TYPE_TEXT, 255, [], 'Resolved Walmart Food Form')
+            ->addColumn('in_scope', Table::TYPE_SMALLINT, null, ['nullable' => false, 'default' => 1], 'In Current Discovery Scope')
+            ->addColumn('already_in_walmart', Table::TYPE_SMALLINT, null, ['nullable' => false, 'default' => 0], 'Found in Imported Walmart Catalog')
+            ->addColumn('validation_status', Table::TYPE_TEXT, 32, ['nullable' => false, 'default' => 'not_validated'], 'Validation Status')
+            ->addColumn('validation_error', Table::TYPE_TEXT, '2M', [], 'Validation Error')
+            ->addColumn('payload_hash', Table::TYPE_TEXT, 64, [], 'Reviewed Payload Hash')
+            ->addColumn('payload_json', Table::TYPE_TEXT, '4M', [], 'Reviewed Exact Item Payload')
+            ->addColumn('ingredient_image_url', Table::TYPE_TEXT, 1024, [], 'Generated Ingredient Image URL')
+            ->addColumn('creation_status', Table::TYPE_TEXT, 32, ['nullable' => false, 'default' => 'candidate'], 'Creation Status')
+            ->addColumn('creation_feed_id', Table::TYPE_TEXT, 255, [], 'Creation Feed ID')
+            ->addColumn('publish_status', Table::TYPE_TEXT, 32, ['nullable' => false, 'default' => 'not_requested'], 'Publish Status')
+            ->addColumn('publish_feed_id', Table::TYPE_TEXT, 255, [], 'Publish Feed ID')
+            ->addColumn('item_id', Table::TYPE_TEXT, 64, [], 'Walmart Item ID')
+            ->addColumn('wpid', Table::TYPE_TEXT, 64, [], 'Walmart Product ID')
+            ->addColumn('last_error', Table::TYPE_TEXT, '2M', [], 'Last Error')
+            ->addColumn('submitted_at', Table::TYPE_TIMESTAMP, null, [], 'Creation Submitted At')
+            ->addColumn('publish_requested_at', Table::TYPE_TIMESTAMP, null, [], 'Publish Requested At')
+            ->addColumn('processed_at', Table::TYPE_TIMESTAMP, null, [], 'Last Feed Processed At')
+            ->addColumn('created_at', Table::TYPE_TIMESTAMP, null, ['nullable' => false, 'default' => Table::TIMESTAMP_INIT], 'Created At')
+            ->addColumn('updated_at', Table::TYPE_TIMESTAMP, null, ['nullable' => false, 'default' => Table::TIMESTAMP_INIT_UPDATE], 'Updated At')
+            ->addIndex($installer->getIdxName('sandy_walmartsync_item_candidate', ['product_id'], \Magento\Framework\DB\Adapter\AdapterInterface::INDEX_TYPE_UNIQUE), ['product_id'], ['type' => \Magento\Framework\DB\Adapter\AdapterInterface::INDEX_TYPE_UNIQUE])
+            ->addIndex($installer->getIdxName('sandy_walmartsync_item_candidate', ['walmart_sku']), ['walmart_sku'])
+            ->addIndex($installer->getIdxName('sandy_walmartsync_item_candidate', ['creation_status']), ['creation_status']);
+        $installer->getConnection()->createTable($candidateTable);
+
         $installer->endSetup();
     }
 }

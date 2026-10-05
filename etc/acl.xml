@@ -7,6 +7,7 @@
                 <resource id="Sandy_WalmartSync::root" title="Walmart Sync" sortOrder="90">
                     <resource id="Sandy_WalmartSync::config" title="Configuration" sortOrder="10"/>
                     <resource id="Sandy_WalmartSync::operations" title="Catalog and Inventory Operations" sortOrder="20"/>
+                    <resource id="Sandy_WalmartSync::new_items" title="Review and Submit New Walmart Items" sortOrder="30"/>
                 </resource>
             </resource>
         </resources>

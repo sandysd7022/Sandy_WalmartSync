@@ -78,12 +78,39 @@ class Client
         return $this->request('PUT', '/v3/inventory', $query, $body);
     }
 
+    public function submitItemFeed($feedType, array $payload)
+    {
+        if (!$this->config->isItemFeedWriteEnabled()) {
+            throw new LocalizedException(__(
+                'Walmart item-feed writes are disabled. Enable both global writes and the separate item-feed safety gate.'
+            ));
+        }
+        $feedType = strtoupper(trim((string)$feedType));
+        if (!in_array($feedType, ['MP_ITEM', 'MP_ITEM_MATCH'], true)) {
+            throw new LocalizedException(__('Unsupported Walmart item feed type: %1', $feedType));
+        }
+        return $this->request('POST', '/v3/feeds', ['feedType' => $feedType], $payload, true);
+    }
+
+    public function getFeedStatus($feedId)
+    {
+        $feedId = trim((string)$feedId);
+        if ($feedId === '' || strlen($feedId) > 200 || !preg_match('/^[A-Za-z0-9._:@-]+$/', $feedId)) {
+            throw new LocalizedException(__('A valid Walmart feed ID is required.'));
+        }
+        return $this->request('GET', '/v3/feeds/' . rawurlencode($feedId), [
+            'includeDetails' => 'true',
+            'offset' => 0,
+            'limit' => 50
+        ]);
+    }
+
     public function getLastCorrelationId()
     {
         return $this->lastCorrelationId;
     }
 
-    private function request($method, $path, array $query = [], array $body = null)
+    private function request($method, $path, array $query = [], array $body = null, $multipartJson = false)
     {
         if (!$this->config->isEnabled()) {
             throw new LocalizedException(__('Walmart Sync is disabled.'));
@@ -95,7 +122,9 @@ class Client
         $correlationId = $this->random->getUniqueHash();
         $this->lastCorrelationId = $correlationId;
         $attempt = 0;
-        $maxAttempts = $this->config->getRetryCount() + 1;
+        // A feed POST is not retried automatically because a timeout can occur
+        // after Walmart accepted it. Retrying could create a duplicate feed.
+        $maxAttempts = strtoupper($method) === 'POST' ? 1 : $this->config->getRetryCount() + 1;
         do {
             $attempt++;
             $accessToken = $this->getAccessToken();
@@ -103,20 +132,27 @@ class Client
                 'WM_SEC.ACCESS_TOKEN' => $accessToken,
                 'WM_QOS.CORRELATION_ID' => $correlationId,
                 'WM_SVC.NAME' => 'Walmart Marketplace',
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json'
+                'Accept' => 'application/json'
             ];
+            if (!$multipartJson) {
+                $headers['Content-Type'] = 'application/json';
+            } else {
+                $headers['WM_GLOBAL_VERSION'] = '3.1';
+                $headers['WM_MARKET'] = 'us';
+            }
             if ($this->config->getChannelType() !== '') {
                 $headers['WM_CONSUMER.CHANNEL.TYPE'] = $this->config->getChannelType();
             }
             if ($this->config->isSandbox()) {
                 $headers['WM_SANDBOX'] = 'v2';
             }
-            if ($method !== 'GET' && $method !== 'PUT') {
+            if ($method !== 'GET' && $method !== 'PUT' && $method !== 'POST') {
                 throw new LocalizedException(__('Unsupported Walmart HTTP method.'));
             }
             $payload = $body !== null ? $this->json->serialize($body) : null;
-            $httpResponse = $this->httpTransport->request($method, $url, $headers, $payload, 60);
+            $httpResponse = $multipartJson
+                ? $this->httpTransport->requestMultipartJson($method, $url, $headers, $payload, 'walmart-item-feed.json', 60)
+                : $this->httpTransport->request($method, $url, $headers, $payload, 60);
             $status = $httpResponse['status'];
             $responseBody = $httpResponse['body'];
             if ($status >= 200 && $status < 300) {

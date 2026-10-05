@@ -2,6 +2,8 @@
 
 Magento Open Source 2.3.4 / PHP 7.1 module for safe Magento-to-Walmart catalog inventory synchronization.
 
+Version 1.7.6 uses the Magento product attribute `ingredients`, automatically creates Walmart's required ingredient-label image, and returns detailed Walmart item-feed validation results. The guarded one-SKU generator remains separate from the inventory cron.
+
 ## Safety defaults
 
 - Module disabled after installation.
@@ -17,6 +19,9 @@ Magento Open Source 2.3.4 / PHP 7.1 module for safe Magento-to-Walmart catalog i
 - Return-exemption status is reference history only and does not control inventory synchronization.
 - Meltable products can be detected from configured Magento categories and automatically held at zero from May 1 through November 30.
 - No Walmart order, shipment, cancellation, return, or tracking code is included.
+- New-item feed submission is disabled separately after installation.
+- Item feeds require a valid Walmart-spec JSON file, an exact dry-run hash and an explicit CLI confirmation.
+- Item feed POST requests are never automatically retried, preventing an uncertain timeout from creating a duplicate submission.
 
 ## Install
 
@@ -41,6 +46,64 @@ Open `Stores > Configuration > Sandy > Walmart Sync`.
 5. Import and review data before enabling writes.
 
 Seller Center access alone does not provide API credentials. Obtain the seller's personal Client ID and Client Secret from Seller Center's API Integration / API Key Management area with Items, Inventory, Feeds, and Pricing permissions only. Orders permissions are not required.
+
+Keep **Allow New Item Feed Submission** set to **No** during normal inventory operation. It is independent of the inventory cron and should be enabled only for an approved item-feed execution.
+
+## Create new Walmart items safely
+
+The module deliberately does not guess Walmart product types or category-specific attributes from Magento. Build and validate the JSON against Walmart's current `MP_ITEM` specification first. Use `MP_ITEM_MATCH` only when creating an offer for an existing Walmart catalog product.
+
+For the first guarded `Gummy Candy` test, set the product's **Ingredients** attribute to the complete ingredient text exactly as printed on the package. This value can be imported with the CSV column `ingredients`.
+
+The generator excludes that SKU when ingredient text is empty. When present, it creates a versioned public PNG under `pub/media/walmart/ingredient-labels/`, adds the ingredient text and image URL to the payload, ignores Magento custom options, and does not add variant-group fields. `--ingredient-image-url` remains an optional override when a real package-label image is available.
+
+```bash
+php bin/magento walmart:item:generate-simple \
+  --sku=US0404-CT4 \
+  --country="United States" \
+  --flavor="Assorted Fruit" \
+  --feature-1="Includes four individually packaged 7 oz containers." \
+  --feature-2="Assortment of 12 fruit-flavored gummy bears." \
+  --feature-3="Shelf-stable multicolor gummy candy for sharing." \
+  --count-per-pack=1 \
+  --multipack-quantity=4 \
+  --net-content-measure=28 \
+  --net-content-unit=Ounce \
+  --size="4 x 7 oz (28 oz total)"
+```
+
+For a temporary one-product test before saving the Magento attribute, use `--ingredients="..."`. This must be a factual package value; the command does not invent missing ingredients.
+
+This only creates a JSON file under `var/export/walmart_sync/`; it does not call Walmart. Review the file before continuing. Product quantity is intentionally excluded because Walmart inventory is sent separately only after successful item ingestion and mapping approval.
+
+Start with one item and keep all Walmart write switches disabled:
+
+```bash
+php bin/magento walmart:item:feed \
+  --file=/absolute/path/walmart-mp-item.json \
+  --feed-type=MP_ITEM
+```
+
+The command validates the header, item list, SKU uniqueness and configured batch limit. It prints a SHA-256 candidate hash and does not contact Walmart.
+
+After client approval, temporarily set both **Allow Walmart Write Operations** and **Allow New Item Feed Submission** to **Yes**, then execute the unchanged file with its exact hash:
+
+```bash
+php bin/magento walmart:item:feed \
+  --file=/absolute/path/walmart-mp-item.json \
+  --feed-type=MP_ITEM \
+  --execute \
+  --confirm="SUBMIT-WALMART-ITEMS" \
+  --candidate-hash="PASTE-EXACT-DRY-RUN-HASH"
+```
+
+Immediately set **Allow New Item Feed Submission** back to **No**. Walmart processes item feeds asynchronously. Use the returned feed ID to check the final item-level result:
+
+```bash
+php bin/magento walmart:item:feed:status --feed-id="WALMART-FEED-ID"
+```
+
+Do not enable inventory sync for a new SKU until its feed status shows successful ingestion and a fresh catalog import contains that Walmart SKU.
 
 ### Meltable seasonal inventory
 
@@ -138,6 +201,14 @@ The success result must show the same values for `unique SKUs` and
 Historical exemption export/import CLI commands remain in the code for audit or recovery purposes, but they are not part of the current inventory rollout.
 
 ## Safe one-product test
+
+### Reviewed Collection-item creation (1.8.0)
+
+The admin page **Walmart Sync > New Walmart Items** is an intentionally manual workflow. It discovers only enabled simple products directly assigned to the configured Collections category. Before discovery, run a complete catalog import; stale imports are rejected. Supported report-backed mappings are `main_cat = Gummies` to `Gummy Candy`, `main_cat = Marshmallow` to `Marshmallows`, and `main_cat = Licorice` to `Licorice Candy`, all under Walmart category `Food & Beverages`. Product name and description are cross-checked against `main_cat`; mismatches are blocked locally. Licorice/Salmiak wording takes precedence over Marshmallow, matching the existing published SD0922 classification.
+
+Populate these Magento values before validation: exact UPC/EAN/GTIN, price, shipping weight, `jet_brand`, country of manufacture, description, short description, main image, `ingredients`, `package_qty`, and `total_package_weight` (for example `28 Oz`). The grid labels `total_package_weight` as **Per Package Weight**. The grid workflow derives three key features from Short Description, Description, and the package quantity/weight summary. Optional `walmart_feature_1`, `walmart_feature_2`, and `walmart_feature_3` values override the derived text when present. Flavor is resolved from `walmart_flavor`, an existing Magento `flavor` value, or explicit flavor wording in Product Name/Short Description; ambiguous flavor is blocked rather than guessed. Food Form is resolved conservatively from the product name (for example Gumdrops, Gummy Bears, Gummy Worms, Gummy Rings, Fruit Slices, Jelly Beans, Chews, Bites or Gummies) and is shown in the review grid; an unclear name is blocked. Validation creates the ingredient image and stores the exact reviewed payload and SHA-256 hash locally; it does not call Walmart.
+
+The **Submit Selected as Unpublished** action sends only stored validated payloads and includes the configured future Walmart `startDate` plus a later `endDate`. Walmart rejects a feed when Site End Date is not later than Site Start Date, so both values are checked locally. The separate **Publish Selected After Review** action is available only after creation ingestion succeeds; it submits that stored payload with `startDate` changed to the current UTC time while retaining the far-future end date. Creation and publication both require the global write switch and the item-feed write switch. Keep both off except during an approved staging test. Inventory synchronization remains a separate workflow.
 
 ```bash
 php bin/magento walmart:connection:test

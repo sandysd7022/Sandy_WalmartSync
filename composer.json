@@ -2,11 +2,12 @@
   "name": "sandy/module-walmart-sync",
   "description": "Safe Magento to Walmart catalog and inventory synchronization",
   "type": "magento2-module",
-  "version": "1.6.15",
+  "version": "1.8.9",
   "license": ["proprietary"],
   "require": {
     "php": ">=7.1 <7.4",
     "ext-curl": "*",
+    "ext-gd": "*",
     "magento/framework": "102.0.*",
     "magento/module-catalog": "103.0.*",
     "magento/module-catalog-inventory": "100.3.*",

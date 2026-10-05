@@ -10,6 +10,16 @@ define([
         'walmart-cell-reference'
     ].join(' ');
 
+    var creationStatusClasses = [
+        'walmart-creation-error',
+        'walmart-creation-success',
+        'walmart-creation-existing',
+        'walmart-creation-ready',
+        'walmart-creation-pending',
+        'walmart-creation-processing',
+        'walmart-creation-neutral'
+    ].join(' ');
+
     var columnClasses = {
         'mapping type': 'walmart-cell-mapping',
         'mapping verified': 'walmart-cell-mapping',
@@ -71,6 +81,40 @@ define([
                     $(this).children('td').eq(index).addClass(className);
                 });
             });
+
+            if (columnIndexes['creation status'] !== undefined) {
+                $table.find('tbody tr').each(function () {
+                    var $status = $(this).children('td').eq(columnIndexes['creation status']);
+                    var value = normalizeLabel($status.text());
+                    var className = 'walmart-creation-neutral';
+                    var title = 'Creation status has not entered a recognized workflow state.';
+
+                    if (value === 'blocked' || value === 'failed') {
+                        className = 'walmart-creation-error';
+                        title = 'Blocked or failed. Review the validation or Walmart error before retrying.';
+                    } else if (value === 'success') {
+                        className = 'walmart-creation-success';
+                        title = 'Walmart successfully created the item.';
+                    } else if (value === 'already_exists' || value === 'already exists') {
+                        className = 'walmart-creation-existing';
+                        title = 'This SKU already exists in the latest imported Walmart catalog.';
+                    } else if (value === 'validated') {
+                        className = 'walmart-creation-ready';
+                        title = 'Local validation passed. Review the payload before submitting.';
+                    } else if (value === 'candidate') {
+                        className = 'walmart-creation-pending';
+                        title = 'Candidate discovered. Run local validation before submission.';
+                    } else if (value === 'submitted' || value === 'inprogress' || value === 'in progress') {
+                        className = 'walmart-creation-processing';
+                        title = 'Submitted to Walmart and awaiting a final feed result.';
+                    }
+
+                    $status
+                        .removeClass(creationStatusClasses)
+                        .addClass(className)
+                        .attr('title', title);
+                });
+            }
 
             if (columnIndexes['mapping type'] === undefined ||
                 columnIndexes['mapping verified'] === undefined) {

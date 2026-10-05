@@ -202,3 +202,81 @@
     font-size: 1.2rem;
     margin: .6rem 0 1.2rem;
 }
+
+/* New Walmart Items: creation workflow states. Text remains visible for accessibility. */
+.admin__data-grid-wrap td.walmart-creation-error {
+    background-color: #fde7e7 !important;
+    box-shadow: inset 4px 0 #c62828 !important;
+    color: #8e1b1b !important;
+    font-weight: 600;
+}
+
+.admin__data-grid-wrap td.walmart-creation-success {
+    background-color: #dff3df !important;
+    box-shadow: inset 4px 0 #2e7d32 !important;
+    color: #1b5e20 !important;
+    font-weight: 600;
+}
+
+.admin__data-grid-wrap td.walmart-creation-existing {
+    background-color: #e8eef5 !important;
+    box-shadow: inset 4px 0 #607d8b !important;
+    color: #37474f !important;
+    font-weight: 600;
+}
+
+.admin__data-grid-wrap td.walmart-creation-ready {
+    background-color: #e0f2f1 !important;
+    box-shadow: inset 4px 0 #00897b !important;
+    color: #00695c !important;
+    font-weight: 600;
+}
+
+.admin__data-grid-wrap td.walmart-creation-pending {
+    background-color: #fff4ce !important;
+    box-shadow: inset 4px 0 #d99a00 !important;
+    color: #6f4e00 !important;
+    font-weight: 600;
+}
+
+.admin__data-grid-wrap td.walmart-creation-processing {
+    background-color: #e3f2fd !important;
+    box-shadow: inset 4px 0 #1976d2 !important;
+    color: #0d47a1 !important;
+    font-weight: 600;
+}
+
+.admin__data-grid-wrap td.walmart-creation-neutral {
+    background-color: #eeeeee !important;
+    box-shadow: inset 4px 0 #777777 !important;
+    color: #444444 !important;
+    font-weight: 600;
+}
+
+.walmart-creation-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .8rem 1.4rem;
+    margin: 1rem 0 1.5rem;
+}
+
+.walmart-creation-legend__item {
+    align-items: center;
+    display: inline-flex;
+    font-weight: 600;
+    gap: .5rem;
+}
+
+.walmart-creation-legend__swatch {
+    border-left: 4px solid;
+    display: inline-block;
+    height: 1.6rem;
+    width: 2.2rem;
+}
+
+.walmart-creation-legend__swatch--error { background: #fde7e7; border-color: #c62828; }
+.walmart-creation-legend__swatch--success { background: #dff3df; border-color: #2e7d32; }
+.walmart-creation-legend__swatch--ready { background: #e0f2f1; border-color: #00897b; }
+.walmart-creation-legend__swatch--pending { background: #fff4ce; border-color: #d99a00; }
+.walmart-creation-legend__swatch--processing { background: #e3f2fd; border-color: #1976d2; }
+.walmart-creation-legend__swatch--existing { background: #e8eef5; border-color: #607d8b; }

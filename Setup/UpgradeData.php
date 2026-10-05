@@ -129,6 +129,66 @@ class UpgradeData implements UpgradeDataInterface
                 0
             );
         }
+        if (version_compare((string)$context->getVersion(), '1.7.3', '<')) {
+            $eavSetup = $this->eavSetupFactory->create(['setup' => $setup]);
+            $attributes = [
+                'ingredients' => [
+                    'type' => 'text',
+                    'label' => 'Ingredients',
+                    'input' => 'textarea',
+                    'required' => false,
+                    'sort_order' => 80,
+                    'note' => 'Enter the complete ingredient statement exactly as printed on the package. Required before creating a new Walmart food item.'
+                ]
+            ];
+            foreach ($attributes as $attributeCode => $attributeData) {
+                if (!$eavSetup->getAttributeId(Product::ENTITY, $attributeCode)) {
+                    $attributeData['group'] = 'Walmart Sync';
+                    $attributeData['global'] = \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_GLOBAL;
+                    $attributeData['visible'] = true;
+                    $attributeData['user_defined'] = true;
+                    $attributeData['used_in_product_listing'] = false;
+                    $eavSetup->addAttribute(Product::ENTITY, $attributeCode, $attributeData);
+                }
+            }
+            foreach (['walmart_ingredients', 'walmart_allergen_information'] as $obsoleteAttributeCode) {
+                if ($eavSetup->getAttributeId(Product::ENTITY, $obsoleteAttributeCode)) {
+                    $eavSetup->updateAttribute(Product::ENTITY, $obsoleteAttributeCode, 'is_visible', 0);
+                }
+            }
+        }
+        if (version_compare((string)$context->getVersion(), '1.8.0', '<')) {
+            $eavSetup = $this->eavSetupFactory->create(['setup' => $setup]);
+            $attributes = [
+                'walmart_flavor' => [
+                    'type' => 'varchar', 'label' => 'Walmart Flavor', 'input' => 'text',
+                    'required' => false, 'sort_order' => 90,
+                    'note' => 'Required for reviewed creation of Collection products mapped to Walmart Gummy Candy.'
+                ],
+                'walmart_feature_1' => [
+                    'type' => 'text', 'label' => 'Walmart Key Feature 1', 'input' => 'textarea',
+                    'required' => false, 'sort_order' => 100
+                ],
+                'walmart_feature_2' => [
+                    'type' => 'text', 'label' => 'Walmart Key Feature 2', 'input' => 'textarea',
+                    'required' => false, 'sort_order' => 110
+                ],
+                'walmart_feature_3' => [
+                    'type' => 'text', 'label' => 'Walmart Key Feature 3', 'input' => 'textarea',
+                    'required' => false, 'sort_order' => 120
+                ]
+            ];
+            foreach ($attributes as $attributeCode => $attributeData) {
+                if (!$eavSetup->getAttributeId(Product::ENTITY, $attributeCode)) {
+                    $attributeData['group'] = 'Walmart Sync';
+                    $attributeData['global'] = \Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface::SCOPE_GLOBAL;
+                    $attributeData['visible'] = true;
+                    $attributeData['user_defined'] = true;
+                    $attributeData['used_in_product_listing'] = false;
+                    $eavSetup->addAttribute(Product::ENTITY, $attributeCode, $attributeData);
+                }
+            }
+        }
         $setup->endSetup();
     }
 }
